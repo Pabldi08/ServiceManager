@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ServiceManager</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <div>
+          <p>SSH + systemctl</p>
+          <h1>ServiceManager</h1>
+        </div>
+      </header>
+
+      <section class="panel">
+        <form method="post" action="/run">
+          <div class="field">
+            <label for="host">Servidor</label>
+            <select id="host" name="host">
+              {{ host_options }}
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="service">Servicio</label>
+            <select id="service" name="service">
+              {{ service_options }}
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="action">Accion</label>
+            <select id="action" name="action">
+              {{ action_options }}
+            </select>
+          </div>
+
+          <button type="submit">Ejecutar</button>
+        </form>
+      </section>
+
+      {{ result }}
+    </main>
+  </body>
+</html>

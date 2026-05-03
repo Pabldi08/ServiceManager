@@ -1,32 +1,28 @@
+from app.config import getActions, getServices
 
-ALLOWED_SERVICES = {
-    "ssh": "ssh.service",
-    "nginx": "nginx.service",
-    "cloudflared": "cloudflared.service",
-    "gallinerito": "gallinerito.service"
-}
-
-ALLOWED_ACTIONS = [
-    "status",
-    "is-active",
-    "start",
-    "stop",
-    "restart"
-]
 
 def getAllowedServices():
-    return ALLOWED_SERVICES
+    return getServices()
+
 
 def getAllowedActions():
-    return ALLOWED_ACTIONS
+    return getActions()
+
+
+def getServiceUnit(serviceKey):
+    services = getAllowedServices()
+
+    if serviceKey not in services:
+        raise ValueError("Servicio no permitido")
+
+    return services[serviceKey]
+
 
 def validateService(serviceName):
-    if serviceName not in ALLOWED_SERVICES.values():
+    if serviceName not in getAllowedServices().values():
         raise ValueError("Servicio no permitido")
 
 
 def validateAction(action):
-    if action not in ALLOWED_ACTIONS:
-        raise ValueError("Acción no permitida")
-
-
+    if action not in getAllowedActions():
+        raise ValueError("Accion no permitida")

@@ -1,0 +1,14 @@
+{
+  "hosts": {
+    "raspberry": {
+      "user": "pablo",
+      "host": "100.92.192.38"
+    }
+  },
+  "services": {
+    "ssh": "ssh.service",
+    "nginx": "nginx.service",
+    "cloudflared": "cloudflared.service",
+    "gallinerito": "gallinerito.service"
+  }
+}
