@@ -33,6 +33,14 @@
    - The main view now uses one selected host for service actions, discovery, and status checks.
    - The service-management view shows every registered service with the five allowed action buttons.
 
+6. UI-managed persistence and accessibility
+   - Runtime configuration now starts fresh and is managed from the web UI.
+   - Hosts can be added with `usuario@host` or `usuario@host:puerto`.
+   - Host and service selections are persisted in `data/service_manager.json`.
+   - Service listing uses `systemctl list-units --type=service --no-pager --no-legend`.
+   - Services are manually selected by the user before being managed.
+   - The UI includes Light, Dark, and System theme modes saved in `localStorage`.
+
 ## Next Point: Safer Shared Command Layer
 
 Goal: make SSH command execution safer and easier to reuse as more features are added.

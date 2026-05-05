@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="system">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ServiceManager</title>
+    <script src="/static/theme.js" defer></script>
     <link rel="stylesheet" href="/static/styles.css">
   </head>
   <body>
@@ -13,7 +14,29 @@
           <p>SSH + systemctl</p>
           <h1>ServiceManager</h1>
         </div>
+        <div class="theme-control">
+          <label for="theme-select">Tema</label>
+          <select id="theme-select" name="theme">
+            <option value="system">System Mode</option>
+            <option value="light">Light Mode</option>
+            <option value="dark">Dark Mode</option>
+          </select>
+        </div>
       </header>
+
+      <section class="panel">
+        <h2>Anadir host SSH</h2>
+        <p>Introduce el host con formato <code>usuario@host</code> o <code>usuario@host:puerto</code>. La app usa claves SSH ya configuradas; no guarda passwords.</p>
+        <form method="post" action="/hosts" class="host-form">
+          <div class="field">
+            <label for="host-input">Conexion SSH</label>
+            <input id="host-input" name="host_input" placeholder="pablo@192.168.1.50:22" required>
+          </div>
+
+          <button type="submit">Anadir host</button>
+        </form>
+        {{ host_list }}
+      </section>
 
       <section class="panel">
         <h2>Servidor seleccionado</h2>
@@ -38,12 +61,12 @@
       </section>
 
       <section class="panel discovery-panel">
-        <h2>Descubrir servicios</h2>
-        <p>Conecta por SSH y lista los servicios disponibles en <strong>{{ selected_host }}</strong>.</p>
+        <h2>Seleccionar servicios</h2>
+        <p>Lista servicios disponibles en <strong>{{ selected_host }}</strong> para que decidas manualmente cuales gestionar.</p>
         <form method="post" action="/discover" class="discover-form">
           <input type="hidden" name="host" value="{{ selected_host }}">
 
-          <button type="submit">Descubrir</button>
+          <button type="submit">Listar servicios</button>
         </form>
       </section>
 

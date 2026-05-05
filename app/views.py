@@ -43,8 +43,23 @@ def renderResult(result):
     """
 
 
+def renderHostList(hosts):
+    if not hosts:
+        return "<p>No hay hosts registrados todavia.</p>"
+
+    items = []
+    for hostName, hostData in hosts.items():
+        target = f"{hostData['user']}@{hostData['host']}:{hostData.get('port', 22)}"
+        items.append(f"<li><strong>{escape(hostName)}</strong> <span>{escape(target)}</span></li>")
+
+    return f"<ul class=\"host-list\">{''.join(items)}</ul>"
+
+
 def renderServiceList(selectedHost):
-    services = getAllowedServices()
+    if not selectedHost:
+        return "<p>Anade un host para empezar a gestionar servicios.</p>"
+
+    services = getAllowedServices(selectedHost)
     actions = getAllowedActions()
 
     if not services:
@@ -84,7 +99,7 @@ def renderDiscoveredServices(selectedHost=None, discoveredServices=None):
         return ""
 
     serviceInputs = []
-    registeredServices = set(getAllowedServices().values())
+    registeredServices = set(getAllowedServices(selectedHost).values())
 
     for serviceName in discoveredServices:
         checked = "" if serviceName in registeredServices else " checked"
@@ -101,12 +116,12 @@ def renderDiscoveredServices(selectedHost=None, discoveredServices=None):
 
     return f"""
     <section class="panel discovery-results">
-      <h2>Servicios descubiertos</h2>
-      <p>Selecciona los servicios que quieres registrar como permitidos.</p>
+      <h2>Servicios disponibles</h2>
+      <p>Selecciona manualmente los servicios que quieres gestionar en este host.</p>
       <form method="post" action="/register-services" class="discovery-list">
         <input type="hidden" name="host" value="{escape(selectedHost or '')}">
         {''.join(serviceInputs)}
-        <button type="submit">Registrar seleccionados</button>
+        <button type="submit">Guardar seleccionados</button>
       </form>
     </section>
     """
@@ -163,6 +178,7 @@ def renderIndex(selected=None, result=None, discoveredServices=None, statuses=No
     html = TEMPLATE_PATH.read_text(encoding="utf-8")
     html = html.replace("{{ host_options }}", buildOptions(hosts, selectedHost))
     html = html.replace("{{ selected_host }}", escape(selectedHost))
+    html = html.replace("{{ host_list }}", renderHostList(getHosts()))
     html = html.replace("{{ service_list }}", renderServiceList(selectedHost))
     html = html.replace(
         "{{ discovered_services }}",

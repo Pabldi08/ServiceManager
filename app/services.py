@@ -1,16 +1,16 @@
-from app.config import getActions, getServices
+from app.config import getActions, getHostServices
 
 
-def getAllowedServices():
-    return getServices()
+def getAllowedServices(hostName):
+    return getHostServices(hostName)
 
 
 def getAllowedActions():
     return getActions()
 
 
-def getServiceUnit(serviceKey):
-    services = getAllowedServices()
+def getServiceUnit(serviceKey, hostName):
+    services = getAllowedServices(hostName)
 
     if serviceKey not in services:
         raise ValueError("Servicio no permitido")
@@ -18,8 +18,8 @@ def getServiceUnit(serviceKey):
     return services[serviceKey]
 
 
-def validateService(serviceName):
-    if serviceName not in getAllowedServices().values():
+def validateService(serviceName, hostName):
+    if serviceName not in getAllowedServices(hostName).values():
         raise ValueError("Servicio no permitido")
 
 

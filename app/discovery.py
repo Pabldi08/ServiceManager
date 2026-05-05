@@ -3,7 +3,7 @@ from app.remote import runRemoteCommand
 
 DISCOVER_SERVICES_COMMAND = [
     "systemctl",
-    "list-unit-files",
+    "list-units",
     "--type=service",
     "--no-pager",
     "--no-legend",
@@ -26,7 +26,7 @@ def parseServiceUnits(output):
     return services
 
 
-def discoverServices(hostName):
+def listAvailableServices(hostName):
     result = runRemoteCommand(hostName, DISCOVER_SERVICES_COMMAND, timeout=45)
 
     if result["returncode"] != 0:
@@ -41,3 +41,7 @@ def discoverServices(hostName):
         "services": parseServiceUnits(result["stdout"]),
         "stderr": "",
     }
+
+
+def discoverServices(hostName):
+    return listAvailableServices(hostName)

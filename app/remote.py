@@ -65,7 +65,7 @@ def runRemoteCommand(hostName, remoteCommand, timeout=30):
 
 def runRemoteSystemctl(hostName, action, serviceName):
     validateAction(action)
-    validateService(serviceName)
+    validateService(serviceName, hostName)
 
     return runRemoteCommand(
         hostName,

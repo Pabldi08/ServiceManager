@@ -15,7 +15,7 @@ def parseServiceState(output):
 
 
 def getServiceStatus(hostName, serviceName):
-    validateService(serviceName)
+    validateService(serviceName, hostName)
 
     result = runRemoteCommand(
         hostName,
@@ -34,7 +34,7 @@ def getServiceStatus(hostName, serviceName):
 def getServiceStatuses(hostName):
     statuses = []
 
-    for serviceKey, serviceName in getAllowedServices().items():
+    for serviceKey, serviceName in getAllowedServices(hostName).items():
         status = getServiceStatus(hostName, serviceName)
         status["key"] = serviceKey
         statuses.append(status)

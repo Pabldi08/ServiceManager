@@ -1,92 +1,109 @@
 import unittest
-from tempfile import TemporaryDirectory
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
-from app.config import addServices, loadSettings, makeServiceKey, validateHostConfig
+from app.hosts import parseHostInput
+from app.storage import addHost, addHostServices, loadData, makeServiceKey
 from app.discovery import parseServiceUnits
 from app.remote import buildSshCommand
-from app.services import (
-    getAllowedActions,
-    getAllowedServices,
-    getServiceUnit,
-    validateAction,
-    validateService,
-)
+from app.services import getServiceUnit, validateAction, validateService
 from app.status import parseServiceState
 from app.views import renderServiceList
 
 
 class ServiceTests(unittest.TestCase):
-    def test_configured_services_are_loaded(self):
-        services = getAllowedServices()
+    def test_host_input_is_parsed_with_default_port(self):
+        hostData = parseHostInput("pablo@192.168.1.50")
 
-        self.assertIn("gallinerito", services)
-        self.assertEqual("gallinerito.service", services["gallinerito"])
+        self.assertEqual("pablo", hostData["user"])
+        self.assertEqual("192.168.1.50", hostData["host"])
+        self.assertEqual(22, hostData["port"])
+        self.assertEqual("pablo@192.168.1.50", hostData["name"])
 
-    def test_service_key_is_translated_to_systemd_unit(self):
-        self.assertEqual("ssh.service", getServiceUnit("ssh"))
+    def test_host_input_is_parsed_with_custom_port(self):
+        hostData = parseHostInput("pablo@192.168.1.50:2222")
 
-    def test_unknown_service_is_rejected(self):
+        self.assertEqual(2222, hostData["port"])
+        self.assertEqual("pablo@192.168.1.50:2222", hostData["name"])
+
+    def test_invalid_host_input_is_rejected(self):
         with self.assertRaises(ValueError):
-            getServiceUnit("unknown")
+            parseHostInput("192.168.1.50")
 
-    def test_unknown_systemd_unit_is_rejected(self):
         with self.assertRaises(ValueError):
-            validateService("unknown.service")
+            parseHostInput("pablo@192.168.1.50:ssh")
+
+    def test_storage_creates_and_saves_hosts(self):
+        with TemporaryDirectory() as directory:
+            dataPath = Path(directory) / "service_manager.json"
+            hostName = addHost(parseHostInput("pablo@192.168.1.50"), dataPath)
+            data = loadData(dataPath)
+
+            self.assertEqual("pablo@192.168.1.50", hostName)
+            self.assertIn(hostName, data["hosts"])
+
+    def test_selected_services_are_saved_per_host(self):
+        with TemporaryDirectory() as directory:
+            dataPath = Path(directory) / "service_manager.json"
+            hostName = addHost(parseHostInput("pablo@192.168.1.50"), dataPath)
+
+            added = addHostServices(
+                hostName,
+                ["ssh.service", "nginx.service", "not-valid.timer"],
+                dataPath,
+            )
+            services = loadData(dataPath)["hosts"][hostName]["services"]
+
+            self.assertEqual(["ssh.service", "nginx.service"], added)
+            self.assertEqual("ssh.service", services["ssh"])
+            self.assertEqual("nginx.service", services["nginx"])
+            self.assertNotIn("not-valid", services)
+
+    def test_service_key_is_created_from_unit_name(self):
+        self.assertEqual("ssh", makeServiceKey("ssh.service"))
+        self.assertEqual("app_worker", makeServiceKey("app@worker.service"))
+
+    def test_service_discovery_output_is_parsed(self):
+        output = """
+ssh.service loaded active running OpenBSD Secure Shell server
+nginx.service loaded active running A high performance web server
+not-a-service.timer loaded active waiting Timer
+cloudflared.service loaded inactive dead cloudflared
+ssh.service loaded active running OpenBSD Secure Shell server
+"""
+
+        services = parseServiceUnits(output)
+
+        self.assertEqual(
+            ["ssh.service", "nginx.service", "cloudflared.service"],
+            services,
+        )
+
+    def test_host_specific_service_validation(self):
+        data = {
+            "hosts": {
+                "raspberry": {
+                    "user": "pablo",
+                    "host": "192.168.1.50",
+                    "port": 22,
+                    "services": {"ssh": "ssh.service"},
+                }
+            }
+        }
+
+        with patch("app.config.loadData", return_value=data):
+            self.assertEqual("ssh.service", getServiceUnit("ssh", "raspberry"))
+            validateService("ssh.service", "raspberry")
+
+            with self.assertRaises(ValueError):
+                validateService("nginx.service", "raspberry")
 
     def test_actions_are_restricted(self):
-        self.assertIn("is-active", getAllowedActions())
+        validateAction("is-active")
 
         with self.assertRaises(ValueError):
             validateAction("disable")
-
-    def test_empty_action_is_rejected(self):
-        with self.assertRaises(ValueError):
-            validateAction("")
-
-    def test_systemd_unit_names_are_restricted(self):
-        validateService("ssh.service")
-
-        with self.assertRaises(ValueError):
-            validateService("mysql.service")
-
-    def test_missing_settings_file_shows_clear_error(self):
-        with TemporaryDirectory() as directory:
-            missingPath = Path(directory) / "settings.json"
-
-            with self.assertRaisesRegex(ValueError, "No se encontro"):
-                loadSettings(missingPath)
-
-    def test_invalid_settings_json_shows_clear_error(self):
-        with TemporaryDirectory() as directory:
-            settingsPath = Path(directory) / "settings.json"
-            settingsPath.write_text("{invalid json", encoding="utf-8")
-
-            with self.assertRaisesRegex(ValueError, "JSON valido"):
-                loadSettings(settingsPath)
-
-    def test_valid_host_config_accepts_optional_port_and_key(self):
-        hostData = {
-            "user": "pablo",
-            "host": "192.168.1.50",
-            "port": 2222,
-            "key_path": "~/.ssh/id_rsa",
-        }
-
-        validateHostConfig("raspberry", hostData)
-
-    def test_host_config_requires_user_and_host(self):
-        with self.assertRaisesRegex(ValueError, "usuario"):
-            validateHostConfig("raspberry", {"host": "192.168.1.50"})
-
-        with self.assertRaisesRegex(ValueError, "direccion"):
-            validateHostConfig("raspberry", {"user": "pablo"})
-
-    def test_host_config_rejects_invalid_port(self):
-        hostData = {"user": "pablo", "host": "192.168.1.50", "port": "22"}
-
-        with self.assertRaisesRegex(ValueError, "puerto"):
-            validateHostConfig("raspberry", hostData)
 
     def test_ssh_command_uses_port_and_key_path(self):
         hostData = {
@@ -104,45 +121,6 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("~/.ssh/id_rsa", command)
         self.assertIn("pablo@192.168.1.50", command)
 
-    def test_service_discovery_output_is_parsed(self):
-        output = """
-ssh.service enabled enabled
-nginx.service disabled enabled
-not-a-service.timer enabled enabled
-cloudflared.service static -
-ssh.service enabled enabled
-"""
-
-        services = parseServiceUnits(output)
-
-        self.assertEqual(
-            ["ssh.service", "nginx.service", "cloudflared.service"],
-            services,
-        )
-
-    def test_service_key_is_created_from_unit_name(self):
-        self.assertEqual("ssh", makeServiceKey("ssh.service"))
-        self.assertEqual("app_worker", makeServiceKey("app@worker.service"))
-
-    def test_selected_services_are_saved_to_settings(self):
-        with TemporaryDirectory() as directory:
-            settingsPath = Path(directory) / "settings.json"
-            settingsPath.write_text(
-                '{"hosts": {}, "services": {"ssh": "ssh.service"}}',
-                encoding="utf-8",
-            )
-
-            added = addServices(
-                ["ssh.service", "nginx.service", "not-valid.timer"],
-                settingsPath,
-            )
-            settings = loadSettings(settingsPath)
-
-            self.assertEqual(["nginx.service"], added)
-            self.assertEqual("ssh.service", settings["services"]["ssh"])
-            self.assertEqual("nginx.service", settings["services"]["nginx"])
-            self.assertNotIn("not-valid", settings["services"])
-
     def test_service_status_output_is_parsed(self):
         self.assertEqual("active", parseServiceState("active\n"))
         self.assertEqual("inactive", parseServiceState("inactive\n"))
@@ -153,15 +131,17 @@ ssh.service enabled enabled
         self.assertEqual("unknown", parseServiceState(""))
 
     def test_service_list_renders_all_action_buttons(self):
-        html = renderServiceList("raspberry")
+        services = {"ssh": "ssh.service", "nginx": "nginx.service"}
+        actions = ["status", "is-active", "start", "stop", "restart"]
 
-        for action in getAllowedActions():
+        with patch("app.views.getAllowedServices", return_value=services):
+            with patch("app.views.getAllowedActions", return_value=actions):
+                html = renderServiceList("raspberry")
+
+        for action in actions:
             self.assertIn(f'value="{action}"', html)
 
-        self.assertEqual(
-            len(getAllowedServices()) * len(getAllowedActions()),
-            html.count('name="action"'),
-        )
+        self.assertEqual(len(services) * len(actions), html.count('name="action"'))
 
 
 if __name__ == "__main__":

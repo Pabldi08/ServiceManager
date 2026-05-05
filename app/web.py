@@ -5,10 +5,12 @@ import sys
 from urllib.parse import parse_qs, urlparse
 
 from app.config import addServices
-from app.discovery import discoverServices
+from app.discovery import listAvailableServices
+from app.hosts import parseHostInput
 from app.remote import runRemoteSystemctl
 from app.services import getServiceUnit
 from app.status import getServiceStatuses
+from app.storage import addHost
 from app.views import renderIndex
 
 
@@ -34,6 +36,10 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
             self.sendStaticCss()
             return
 
+        if path == "/static/theme.js":
+            self.sendStaticJs("theme.js")
+            return
+
         self.send_error(404, "Pagina no encontrada")
 
     def do_POST(self):
@@ -41,6 +47,10 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
 
         if path == "/run":
             self.handleRun()
+            return
+
+        if path == "/hosts":
+            self.handleAddHost()
             return
 
         if path == "/discover":
@@ -57,6 +67,28 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
 
         self.send_error(404, "Pagina no encontrada")
 
+    def handleAddHost(self):
+        form = self.readForm()
+        hostInput = form.get("host_input", [""])[0]
+
+        try:
+            hostName = addHost(parseHostInput(hostInput))
+            selected = {"host": hostName}
+            result = {
+                "returncode": 0,
+                "stdout": f"Host registrado: {hostName}",
+                "stderr": "",
+            }
+        except ValueError as error:
+            selected = {}
+            result = {
+                "returncode": 1,
+                "stdout": "",
+                "stderr": str(error),
+            }
+
+        self.sendHtml(renderIndex(selected, result))
+
     def handleRun(self):
         form = self.readForm()
         selected = {
@@ -66,7 +98,7 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
         }
 
         try:
-            serviceName = getServiceUnit(selected["service"])
+            serviceName = getServiceUnit(selected["service"], selected["host"])
             result = runRemoteSystemctl(
                 hostName=selected["host"],
                 action=selected["action"],
@@ -114,7 +146,7 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
         selected = {"host": form.get("host", [""])[0]}
 
         try:
-            discovery = discoverServices(selected["host"])
+            discovery = listAvailableServices(selected["host"])
         except ValueError as error:
             discovery = {
                 "returncode": 1,
@@ -133,7 +165,7 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
 
         result = {
             "returncode": 0,
-            "stdout": f"Se encontraron {len(discovery['services'])} servicios",
+            "stdout": f"Servicios disponibles encontrados: {len(discovery['services'])}",
             "stderr": "",
         }
         self.sendHtml(renderIndex(selected, result, discovery["services"]))
@@ -152,7 +184,7 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
             self.sendHtml(renderIndex(selected, result))
             return
 
-        addedServices = addServices(serviceNames)
+        addedServices = addServices(selected["host"], serviceNames)
         result = {
             "returncode": 0,
             "stdout": f"Servicios nuevos registrados: {len(addedServices)}",
@@ -180,6 +212,14 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(css)))
         self.end_headers()
         self.wfile.write(css)
+
+    def sendStaticJs(self, fileName):
+        script = (STATIC_DIR / fileName).read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/javascript; charset=utf-8")
+        self.send_header("Content-Length", str(len(script)))
+        self.end_headers()
+        self.wfile.write(script)
 
 
 def getServerPort(defaultPort=5500):

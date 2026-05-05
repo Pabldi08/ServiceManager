@@ -1,3 +1,4 @@
 __pycache__/
 *.pyc
 .codex-server*.log
+data/service_manager.json

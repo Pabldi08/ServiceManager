@@ -55,43 +55,39 @@ bun run test
 
 ## Estructura del proyecto
 
-- `settings.json`: configuración de hosts y servicios sin tocar código Python.
+- `data/service_manager.json`: datos persistentes creados por la app con hosts y servicios seleccionados.
 - `app/services.py`: valida que solo se usen servicios y acciones permitidas.
 - `app/remote.py`: construye y ejecuta comandos SSH con `systemctl`.
 - `app/web.py`: crea una interfaz web mínima usando solo la librería estándar.
+- `app/storage.py`: guarda y carga la configuración editable desde la interfaz.
+- `app/hosts.py`: valida entradas SSH como `usuario@host` o `usuario@host:puerto`.
 - `templates/index.html`: estructura visual de la página.
 - `static/styles.css`: estilos de la página.
+- `static/theme.js`: guarda el tema elegido en `localStorage`.
 - `package.json`: comandos para lanzar y probar el proyecto usando Bun.
 
 ---
 
-## Configuración de hosts
+## Configuración desde la interfaz
 
-Los hosts se configuran en `settings.json`.
+La configuración principal ya no se edita manualmente en `settings.json`.
 
-Cada host debe tener:
+Ahora se gestiona desde la web:
 
-- `user`: usuario remoto.
-- `host`: IP o dominio del servidor.
-- `port`: puerto SSH, normalmente `22`.
-- `key_path`: ruta opcional a la clave SSH privada.
+1. Abre la aplicación.
+2. Añade un host SSH con formato `usuario@host` o `usuario@host:puerto`.
+3. Selecciona el host.
+4. Pulsa `Listar servicios` para consultar servicios disponibles con SSH.
+5. Marca manualmente los servicios que quieres gestionar.
+6. Guarda los servicios seleccionados.
 
-Ejemplo:
+Los datos se guardan en:
 
-```json
-{
-  "hosts": {
-    "raspberry": {
-      "user": "pablo",
-      "host": "100.92.192.38",
-      "port": 22,
-      "key_path": "~/.ssh/id_ed25519_rpi"
-    }
-  }
-}
+```text
+data/service_manager.json
 ```
 
-> No guardes contraseñas dentro de `settings.json`.
+No se solicitan ni se guardan passwords. La conexión debe funcionar con claves SSH ya configuradas para el usuario local.
 
 ---
 
@@ -200,25 +196,39 @@ ssh raspberry
 
 ---
 
-## Descubrir servicios automáticamente
+## Seleccionar servicios manualmente
 
-La página tiene una sección llamada `Descubrir servicios`.
+La página tiene una sección llamada `Seleccionar servicios`.
 
 Funcionamiento:
 
-1. Selecciona un servidor configurado.
-2. Pulsa `Descubrir`.
+1. Selecciona un host configurado.
+2. Pulsa `Listar servicios`.
 3. La app ejecuta por SSH:
 
 ```bash
-systemctl list-unit-files --type=service --no-pager --no-legend
+systemctl list-units --type=service --no-pager --no-legend
 ```
 
 4. Se muestra una lista con los servicios encontrados.
-5. Selecciona los servicios que quieres permitir.
-6. Pulsa `Registrar seleccionados`.
+5. Selecciona manualmente los servicios que quieres gestionar.
+6. Pulsa `Guardar seleccionados`.
 
-La app no registra automáticamente todos los servicios descubiertos. Primero muestra la lista y solo guarda los servicios seleccionados.
+La app no registra automáticamente todos los servicios encontrados.
+
+---
+
+## Tema accesible
+
+La interfaz incluye un selector de tema:
+
+- `Light Mode`
+- `Dark Mode`
+- `System Mode`
+
+`System Mode` usa la preferencia del sistema mediante `prefers-color-scheme`.
+
+La preferencia se guarda en `localStorage`, por lo que se mantiene al recargar la página.
 
 ---
 
@@ -230,7 +240,7 @@ No se deben guardar contraseñas en archivos de configuración.
 
 La autenticación SSH debe hacerse mediante claves SSH.
 
-El archivo `settings.json` solo debe contener datos de conexión y rutas a claves privadas, nunca passwords.
+El archivo persistente de la app solo guarda hosts y servicios seleccionados, nunca passwords.
 
 ---
 
