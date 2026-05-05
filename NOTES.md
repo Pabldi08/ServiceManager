@@ -20,7 +20,50 @@
    - Only user-selected services are registered into `settings.json`.
    - Discovery parsing and settings persistence have tests.
 
-## Next Point: Service Status Dashboard
+4. Service status dashboard
+   - `app/status.py` can parse `systemctl is-active` output.
+   - The web page has a read-only status panel for registered services.
+   - The dashboard shows service key, unit name, state, and error text.
+   - States use simple labels like `active`, `inactive`, `failed`, and `unknown`.
+   - Status parsing has tests.
+
+5. Separate backend logic more clearly
+   - HTML rendering helpers were moved from `app/web.py` to `app/views.py`.
+   - `app/web.py` now focuses more on HTTP request handling.
+   - The main view now uses one selected host for service actions, discovery, and status checks.
+   - The service-management view shows every registered service with the five allowed action buttons.
+
+## Next Point: Safer Shared Command Layer
+
+Goal: make SSH command execution safer and easier to reuse as more features are added.
+
+Suggested steps:
+
+1. Review `app/remote.py` and keep all SSH execution in one place.
+2. Use one result format for all remote commands.
+3. Keep command construction separate from command execution.
+4. Add tests for command construction where useful.
+5. Avoid adding dangerous commands or broad shell execution.
+
+Important safety rule: do not use `shell=True` for remote command building. Keep commands as argument lists.
+
+## Completed Plan Details
+
+### Separate Backend Logic More Clearly
+
+Goal: keep backend modules small and easier to test as the app grows.
+
+Suggested steps:
+
+1. Review `app/web.py` and identify logic that belongs outside the web layer.
+2. Keep request handling in `app/web.py`.
+3. Move reusable service/status/discovery helpers into focused backend modules only when needed.
+4. Avoid a large refactor; make small extractions that improve readability.
+5. Add or update tests when logic is moved.
+
+Important safety rule: do not change the app behavior during this cleanup. The goal is organization, not new features.
+
+### Service Status Dashboard
 
 Goal: show the current state of registered services for a selected host.
 
@@ -40,8 +83,6 @@ Suggested steps:
 7. Add tests for parsing service states.
 
 Important safety rule: the dashboard should only read service state. It should not start, stop, restart, enable, or disable services automatically.
-
-## Completed Plan Details
 
 ### Automatic Service Discovery
 
@@ -67,8 +108,6 @@ Important safety rule: discovery should not automatically allow every remote ser
 
 ## Later Points
 
-4. Separate backend logic more clearly as the project grows.
-5. Add a safer shared command layer for SSH execution.
 6. Improve the web interface.
 7. Add persistence for discovered services.
 8. Add logs and action history.

@@ -12,6 +12,8 @@ from app.services import (
     validateAction,
     validateService,
 )
+from app.status import parseServiceState
+from app.views import renderServiceList
 
 
 class ServiceTests(unittest.TestCase):
@@ -140,6 +142,26 @@ ssh.service enabled enabled
             self.assertEqual("ssh.service", settings["services"]["ssh"])
             self.assertEqual("nginx.service", settings["services"]["nginx"])
             self.assertNotIn("not-valid", settings["services"])
+
+    def test_service_status_output_is_parsed(self):
+        self.assertEqual("active", parseServiceState("active\n"))
+        self.assertEqual("inactive", parseServiceState("inactive\n"))
+        self.assertEqual("failed", parseServiceState("failed\n"))
+
+    def test_unknown_service_status_is_reported(self):
+        self.assertEqual("unknown", parseServiceState("unexpected\n"))
+        self.assertEqual("unknown", parseServiceState(""))
+
+    def test_service_list_renders_all_action_buttons(self):
+        html = renderServiceList("raspberry")
+
+        for action in getAllowedActions():
+            self.assertIn(f'value="{action}"', html)
+
+        self.assertEqual(
+            len(getAllowedServices()) * len(getAllowedActions()),
+            html.count('name="action"'),
+        )
 
 
 if __name__ == "__main__":

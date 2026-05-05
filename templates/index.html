@@ -16,8 +16,8 @@
       </header>
 
       <section class="panel">
-        <h2>Gestionar servicio</h2>
-        <form method="post" action="/run">
+        <h2>Servidor seleccionado</h2>
+        <form method="get" action="/" class="host-form">
           <div class="field">
             <label for="host">Servidor</label>
             <select id="host" name="host">
@@ -25,40 +25,40 @@
             </select>
           </div>
 
-          <div class="field">
-            <label for="service">Servicio</label>
-            <select id="service" name="service">
-              {{ service_options }}
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="action">Accion</label>
-            <select id="action" name="action">
-              {{ action_options }}
-            </select>
-          </div>
-
-          <button type="submit">Ejecutar</button>
+          <button type="submit">Seleccionar</button>
         </form>
+      </section>
+
+      <section class="panel services-panel">
+        <h2>Servicios registrados</h2>
+        <p>Lista completa de servicios configurados para el host seleccionado. Cada fila permite ejecutar una de las cinco acciones permitidas.</p>
+        <div class="service-list">
+          {{ service_list }}
+        </div>
       </section>
 
       <section class="panel discovery-panel">
         <h2>Descubrir servicios</h2>
-        <p>Conecta por SSH y lista los servicios disponibles en el servidor seleccionado.</p>
+        <p>Conecta por SSH y lista los servicios disponibles en <strong>{{ selected_host }}</strong>.</p>
         <form method="post" action="/discover" class="discover-form">
-          <div class="field">
-            <label for="discovery-host">Servidor</label>
-            <select id="discovery-host" name="host">
-              {{ discovery_host_options }}
-            </select>
-          </div>
+          <input type="hidden" name="host" value="{{ selected_host }}">
 
           <button type="submit">Descubrir</button>
         </form>
       </section>
 
+      <section class="panel status-panel">
+        <h2>Panel de estado</h2>
+        <p>Consulta el estado actual de todos los servicios registrados en <strong>{{ selected_host }}</strong>. Esta accion solo lee informacion.</p>
+        <form method="post" action="/status" class="status-form">
+          <input type="hidden" name="host" value="{{ selected_host }}">
+
+          <button type="submit">Actualizar estado</button>
+        </form>
+      </section>
+
       {{ result }}
+      {{ status_dashboard }}
       {{ discovered_services }}
     </main>
   </body>
