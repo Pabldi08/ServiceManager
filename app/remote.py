@@ -1,22 +1,13 @@
 import subprocess
 
-from app.config import getHosts
+from app.config import getHost
 from app.services import validateAction, validateService
 
 
-def runRemoteSystemctl(hostName, action, serviceName):
-    hosts = getHosts()
-
-    if hostName not in hosts:
-        raise ValueError("Host no permitido")
-
-    validateAction(action)
-    validateService(serviceName)
-
-    hostData = hosts[hostName]
-
+def buildSshCommand(hostData, remoteCommand):
     user = hostData["user"]
     host = hostData["host"]
+    port = str(hostData.get("port", 22))
     remoteTarget = f"{user}@{host}"
 
     command = [
@@ -25,13 +16,38 @@ def runRemoteSystemctl(hostName, action, serviceName):
         "BatchMode=yes",
         "-o",
         "ConnectTimeout=10",
-        remoteTarget,
-        "sudo",
-        "-n",
-        "systemctl",
-        action,
-        serviceName,
+        "-p",
+        port,
     ]
+
+    keyPath = hostData.get("key_path")
+    if keyPath:
+        command.extend(["-i", keyPath])
+
+    command.extend([
+        remoteTarget,
+        *remoteCommand,
+    ])
+
+    return command
+
+
+def runRemoteSystemctl(hostName, action, serviceName):
+    hostData = getHost(hostName)
+
+    validateAction(action)
+    validateService(serviceName)
+
+    command = buildSshCommand(
+        hostData,
+        [
+            "sudo",
+            "-n",
+            "systemctl",
+            action,
+            serviceName,
+        ],
+    )
 
     try:
         result = subprocess.run(

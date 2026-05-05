@@ -15,12 +15,47 @@ ALLOWED_ACTIONS = [
 
 
 def loadSettings(path=SETTINGS_PATH):
-    with open(path, encoding="utf-8") as settingsFile:
-        return json.load(settingsFile)
+    try:
+        with open(path, encoding="utf-8") as settingsFile:
+            return json.load(settingsFile)
+    except FileNotFoundError as error:
+        raise ValueError(f"No se encontro el archivo de configuracion: {path}") from error
+    except json.JSONDecodeError as error:
+        raise ValueError(f"El archivo de configuracion no tiene JSON valido: {path}") from error
 
 
 def getHosts():
     return loadSettings().get("hosts", {})
+
+
+def getHost(hostName):
+    hosts = getHosts()
+
+    if hostName not in hosts:
+        raise ValueError("Host no permitido")
+
+    hostData = hosts[hostName]
+    validateHostConfig(hostName, hostData)
+    return hostData
+
+
+def validateHostConfig(hostName, hostData):
+    if not isinstance(hostData, dict):
+        raise ValueError(f"La configuracion del host '{hostName}' no es valida")
+
+    if not hostData.get("user"):
+        raise ValueError(f"El host '{hostName}' no tiene usuario SSH configurado")
+
+    if not hostData.get("host"):
+        raise ValueError(f"El host '{hostName}' no tiene direccion SSH configurada")
+
+    port = hostData.get("port", 22)
+    if not isinstance(port, int) or port <= 0:
+        raise ValueError(f"El host '{hostName}' tiene un puerto SSH no valido")
+
+    keyPath = hostData.get("key_path")
+    if keyPath is not None and not keyPath:
+        raise ValueError(f"El host '{hostName}' tiene una ruta de llave SSH no valida")
 
 
 def getServices():

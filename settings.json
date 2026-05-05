@@ -2,7 +2,8 @@
   "hosts": {
     "raspberry": {
       "user": "pablo",
-      "host": "100.92.192.38"
+      "host": "100.92.192.38",
+      "port": 22
     }
   },
   "services": {
