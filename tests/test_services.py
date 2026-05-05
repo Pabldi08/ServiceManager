@@ -2,7 +2,8 @@ import unittest
 from tempfile import TemporaryDirectory
 from pathlib import Path
 
-from app.config import loadSettings, validateHostConfig
+from app.config import addServices, loadSettings, makeServiceKey, validateHostConfig
+from app.discovery import parseServiceUnits
 from app.remote import buildSshCommand
 from app.services import (
     getAllowedActions,
@@ -100,6 +101,45 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("-i", command)
         self.assertIn("~/.ssh/id_rsa", command)
         self.assertIn("pablo@192.168.1.50", command)
+
+    def test_service_discovery_output_is_parsed(self):
+        output = """
+ssh.service enabled enabled
+nginx.service disabled enabled
+not-a-service.timer enabled enabled
+cloudflared.service static -
+ssh.service enabled enabled
+"""
+
+        services = parseServiceUnits(output)
+
+        self.assertEqual(
+            ["ssh.service", "nginx.service", "cloudflared.service"],
+            services,
+        )
+
+    def test_service_key_is_created_from_unit_name(self):
+        self.assertEqual("ssh", makeServiceKey("ssh.service"))
+        self.assertEqual("app_worker", makeServiceKey("app@worker.service"))
+
+    def test_selected_services_are_saved_to_settings(self):
+        with TemporaryDirectory() as directory:
+            settingsPath = Path(directory) / "settings.json"
+            settingsPath.write_text(
+                '{"hosts": {}, "services": {"ssh": "ssh.service"}}',
+                encoding="utf-8",
+            )
+
+            added = addServices(
+                ["ssh.service", "nginx.service", "not-valid.timer"],
+                settingsPath,
+            )
+            settings = loadSettings(settingsPath)
+
+            self.assertEqual(["nginx.service"], added)
+            self.assertEqual("ssh.service", settings["services"]["ssh"])
+            self.assertEqual("nginx.service", settings["services"]["nginx"])
+            self.assertNotIn("not-valid", settings["services"])
 
 
 if __name__ == "__main__":

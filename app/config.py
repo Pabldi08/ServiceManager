@@ -24,6 +24,12 @@ def loadSettings(path=SETTINGS_PATH):
         raise ValueError(f"El archivo de configuracion no tiene JSON valido: {path}") from error
 
 
+def saveSettings(settings, path=SETTINGS_PATH):
+    with open(path, "w", encoding="utf-8") as settingsFile:
+        json.dump(settings, settingsFile, indent=2)
+        settingsFile.write("\n")
+
+
 def getHosts():
     return loadSettings().get("hosts", {})
 
@@ -60,6 +66,37 @@ def validateHostConfig(hostName, hostData):
 
 def getServices():
     return loadSettings().get("services", {})
+
+
+def makeServiceKey(serviceName):
+    key = serviceName.removesuffix(".service")
+    cleanKey = []
+
+    for character in key:
+        if character.isalnum() or character in ("-", "_"):
+            cleanKey.append(character)
+        else:
+            cleanKey.append("_")
+
+    return "".join(cleanKey)
+
+
+def addServices(serviceNames, path=SETTINGS_PATH):
+    settings = loadSettings(path)
+    services = settings.setdefault("services", {})
+    added = []
+
+    for serviceName in serviceNames:
+        if not serviceName.endswith(".service"):
+            continue
+
+        serviceKey = makeServiceKey(serviceName)
+        if serviceKey not in services:
+            services[serviceKey] = serviceName
+            added.append(serviceName)
+
+    saveSettings(settings, path)
+    return added
 
 
 def getActions():

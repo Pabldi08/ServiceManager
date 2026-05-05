@@ -32,29 +32,16 @@ def buildSshCommand(hostData, remoteCommand):
     return command
 
 
-def runRemoteSystemctl(hostName, action, serviceName):
+def runRemoteCommand(hostName, remoteCommand, timeout=30):
     hostData = getHost(hostName)
-
-    validateAction(action)
-    validateService(serviceName)
-
-    command = buildSshCommand(
-        hostData,
-        [
-            "sudo",
-            "-n",
-            "systemctl",
-            action,
-            serviceName,
-        ],
-    )
+    command = buildSshCommand(hostData, remoteCommand)
 
     try:
         result = subprocess.run(
             command,
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=timeout,
         )
     except FileNotFoundError:
         return {
@@ -74,3 +61,19 @@ def runRemoteSystemctl(hostName, action, serviceName):
         "stdout": result.stdout.strip(),
         "stderr": result.stderr.strip(),
     }
+
+
+def runRemoteSystemctl(hostName, action, serviceName):
+    validateAction(action)
+    validateService(serviceName)
+
+    return runRemoteCommand(
+        hostName,
+        [
+            "sudo",
+            "-n",
+            "systemctl",
+            action,
+            serviceName,
+        ],
+    )

@@ -43,11 +43,29 @@ body {
   padding: 20px;
 }
 
+.panel {
+  margin-top: 18px;
+}
+
+.panel h2 {
+  margin: 0 0 14px;
+  font-size: 22px;
+}
+
+.panel p {
+  margin: -4px 0 16px;
+  color: #4f5f6d;
+}
+
 form {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr auto;
   gap: 12px;
   align-items: end;
+}
+
+.discover-form {
+  grid-template-columns: 1fr auto;
 }
 
 label {
@@ -83,6 +101,39 @@ button {
 
 button:hover {
   background: #195354;
+}
+
+.discovery-list {
+  display: block;
+}
+
+.check-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #edf1f4;
+  font-weight: 400;
+}
+
+.check-row input {
+  width: auto;
+}
+
+.check-row span span {
+  display: inline-block;
+  margin-left: 8px;
+  border-radius: 999px;
+  background: #edf1f4;
+  color: #4f5f6d;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.discovery-list button {
+  margin-top: 16px;
+  width: auto;
 }
 
 .result {

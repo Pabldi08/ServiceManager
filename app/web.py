@@ -1,10 +1,12 @@
 from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import os
 from pathlib import Path
 import sys
 from urllib.parse import parse_qs, urlparse
 
-from app.config import getHosts
+from app.config import addServices, getHosts
+from app.discovery import discoverServices
 from app.remote import runRemoteSystemctl
 from app.services import getAllowedActions, getAllowedServices, getServiceUnit
 
@@ -48,7 +50,40 @@ def renderResult(result):
     """
 
 
-def renderIndex(selected=None, result=None):
+def renderDiscoveredServices(selectedHost=None, discoveredServices=None):
+    if not discoveredServices:
+        return ""
+
+    serviceInputs = []
+    registeredServices = set(getAllowedServices().values())
+
+    for serviceName in discoveredServices:
+        checked = "" if serviceName in registeredServices else " checked"
+        disabled = " disabled" if serviceName in registeredServices else ""
+        badge = " <span>registrado</span>" if serviceName in registeredServices else ""
+        escapedService = escape(serviceName)
+
+        serviceInputs.append(f"""
+          <label class="check-row">
+            <input type="checkbox" name="services" value="{escapedService}"{checked}{disabled}>
+            <span>{escapedService}{badge}</span>
+          </label>
+        """)
+
+    return f"""
+    <section class="panel discovery-results">
+      <h2>Servicios descubiertos</h2>
+      <p>Selecciona los servicios que quieres registrar como permitidos.</p>
+      <form method="post" action="/register-services" class="discovery-list">
+        <input type="hidden" name="host" value="{escape(selectedHost or '')}">
+        {''.join(serviceInputs)}
+        <button type="submit">Registrar seleccionados</button>
+      </form>
+    </section>
+    """
+
+
+def renderIndex(selected=None, result=None, discoveredServices=None):
     selected = selected or {}
     hosts = [(hostName, hostName) for hostName in getHosts()]
     services = [
@@ -66,6 +101,14 @@ def renderIndex(selected=None, result=None):
     html = html.replace(
         "{{ action_options }}",
         buildOptions(actions, selected.get("action")),
+    )
+    html = html.replace(
+        "{{ discovery_host_options }}",
+        buildOptions(hosts, selected.get("host")),
+    )
+    html = html.replace(
+        "{{ discovered_services }}",
+        renderDiscoveredServices(selected.get("host"), discoveredServices),
     )
     html = html.replace("{{ result }}", renderResult(result))
     return html
@@ -91,10 +134,21 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlparse(self.path).path
 
-        if path != "/run":
-            self.send_error(404, "Pagina no encontrada")
+        if path == "/run":
+            self.handleRun()
             return
 
+        if path == "/discover":
+            self.handleDiscover()
+            return
+
+        if path == "/register-services":
+            self.handleRegisterServices()
+            return
+
+        self.send_error(404, "Pagina no encontrada")
+
+    def handleRun(self):
         form = self.readForm()
         selected = {
             "host": form.get("host", [""])[0],
@@ -116,6 +170,57 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
                 "stderr": str(error),
             }
 
+        self.sendHtml(renderIndex(selected, result))
+
+    def handleDiscover(self):
+        form = self.readForm()
+        selected = {"host": form.get("host", [""])[0]}
+
+        try:
+            discovery = discoverServices(selected["host"])
+        except ValueError as error:
+            discovery = {
+                "returncode": 1,
+                "services": [],
+                "stderr": str(error),
+            }
+
+        if discovery["returncode"] != 0:
+            result = {
+                "returncode": discovery["returncode"],
+                "stdout": "",
+                "stderr": discovery["stderr"],
+            }
+            self.sendHtml(renderIndex(selected, result))
+            return
+
+        result = {
+            "returncode": 0,
+            "stdout": f"Se encontraron {len(discovery['services'])} servicios",
+            "stderr": "",
+        }
+        self.sendHtml(renderIndex(selected, result, discovery["services"]))
+
+    def handleRegisterServices(self):
+        form = self.readForm()
+        selected = {"host": form.get("host", [""])[0]}
+        serviceNames = form.get("services", [])
+
+        if not serviceNames:
+            result = {
+                "returncode": 1,
+                "stdout": "",
+                "stderr": "No se seleccionaron servicios para registrar",
+            }
+            self.sendHtml(renderIndex(selected, result))
+            return
+
+        addedServices = addServices(serviceNames)
+        result = {
+            "returncode": 0,
+            "stdout": f"Servicios nuevos registrados: {len(addedServices)}",
+            "stderr": "",
+        }
         self.sendHtml(renderIndex(selected, result))
 
     def readForm(self):
@@ -140,8 +245,33 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
         self.wfile.write(css)
 
 
-def runServer(host="127.0.0.1", port=5500):
-    server = ThreadingHTTPServer((host, port), ServiceManagerHandler)
+def getServerPort(defaultPort=5500):
+    portValue = os.environ.get("PORT")
+
+    if portValue is None:
+        return defaultPort
+
+    try:
+        return int(portValue)
+    except ValueError as error:
+        raise ValueError("La variable PORT debe ser un numero") from error
+
+
+def runServer(host="127.0.0.1", port=None):
+    port = port or getServerPort()
+
+    try:
+        server = ThreadingHTTPServer((host, port), ServiceManagerHandler)
+    except OSError as error:
+        if error.errno == 98:
+            print(
+                f"No se pudo iniciar ServiceManager: el puerto {port} ya esta en uso."
+            )
+            print("Cierra el servidor anterior o usa otro puerto con PORT=5501 python3 run.py")
+            return
+
+        raise
+
     if sys.stdout is not None:
         try:
             print(f"ServiceManager disponible en http://{host}:{port}")

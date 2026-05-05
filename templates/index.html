@@ -16,6 +16,7 @@
       </header>
 
       <section class="panel">
+        <h2>Gestionar servicio</h2>
         <form method="post" action="/run">
           <div class="field">
             <label for="host">Servidor</label>
@@ -42,7 +43,23 @@
         </form>
       </section>
 
+      <section class="panel discovery-panel">
+        <h2>Descubrir servicios</h2>
+        <p>Conecta por SSH y lista los servicios disponibles en el servidor seleccionado.</p>
+        <form method="post" action="/discover" class="discover-form">
+          <div class="field">
+            <label for="discovery-host">Servidor</label>
+            <select id="discovery-host" name="host">
+              {{ discovery_host_options }}
+            </select>
+          </div>
+
+          <button type="submit">Descubrir</button>
+        </form>
+      </section>
+
       {{ result }}
+      {{ discovered_services }}
     </main>
   </body>
 </html>

@@ -9,6 +9,12 @@ python3 run.py
 
 Despues abre `http://127.0.0.1:5500`.
 
+Si el puerto `5500` ya esta ocupado, puedes usar otro puerto:
+
+```powershell
+PORT=5501 python3 run.py
+```
+
 Tambien se puede lanzar con Bun:
 
 ```powershell
@@ -51,3 +57,20 @@ Cada host debe tener `user` y `host`. Tambien puede tener `port` y `key_path`:
 ```
 
 `key_path` es opcional. No guardes passwords dentro de este archivo.
+
+## Descubrir servicios automaticamente
+
+La pagina tiene una seccion llamada `Descubrir servicios`.
+
+1. Selecciona un servidor configurado.
+2. Pulsa `Descubrir`.
+3. La app ejecuta por SSH:
+
+```bash
+systemctl list-unit-files --type=service --no-pager --no-legend
+```
+
+4. Selecciona los servicios que quieres permitir.
+5. Pulsa `Registrar seleccionados`.
+
+La app no registra automaticamente todos los servicios descubiertos. Primero muestra la lista y solo guarda los servicios seleccionados.

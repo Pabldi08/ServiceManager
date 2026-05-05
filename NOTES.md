@@ -13,7 +13,37 @@
    - Host configuration is validated before running SSH commands.
    - Bun can launch the project with `bun run start`.
 
-## Next Point: Automatic Service Discovery
+3. Automatic service discovery
+   - `app/discovery.py` can parse `systemctl list-unit-files` output.
+   - The web page can discover services from a selected SSH host.
+   - Discovered services are shown before saving.
+   - Only user-selected services are registered into `settings.json`.
+   - Discovery parsing and settings persistence have tests.
+
+## Next Point: Service Status Dashboard
+
+Goal: show the current state of registered services for a selected host.
+
+Suggested steps:
+
+1. Add a backend function that runs this command for one service:
+
+   ```bash
+   systemctl is-active service-name
+   ```
+
+2. Add a function that checks every registered service for a selected host.
+3. Show a table in the web page with service name and state.
+4. Use simple labels such as `active`, `inactive`, `failed`, or `unknown`.
+5. Add a refresh button.
+6. Keep the existing manual action form available.
+7. Add tests for parsing service states.
+
+Important safety rule: the dashboard should only read service state. It should not start, stop, restart, enable, or disable services automatically.
+
+## Completed Plan Details
+
+### Automatic Service Discovery
 
 Goal: detect services from a Linux device connected through SSH and allow the user to register selected services.
 
@@ -37,7 +67,6 @@ Important safety rule: discovery should not automatically allow every remote ser
 
 ## Later Points
 
-3. Add a service status dashboard.
 4. Separate backend logic more clearly as the project grows.
 5. Add a safer shared command layer for SSH execution.
 6. Improve the web interface.
