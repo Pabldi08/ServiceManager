@@ -39,7 +39,7 @@
    - Host and service selections are persisted in `data/service_manager.json`.
    - Service listing uses `systemctl list-units --type=service --no-pager --no-legend`.
    - Services are manually selected by the user before being managed.
-   - The UI includes Light, Dark, and System theme modes saved in `localStorage`.
+   - The UI includes Light and Dark theme modes saved in `localStorage`.
 
 7. Safer shared command layer
    - SSH command construction and execution remain centralized in `app/remote.py`.
@@ -50,8 +50,8 @@
 
 8. Improve the web interface
    - The heading was refactored into a `<nav>` layout using Flexbox.
-   - The theme dropdown was replaced with a three-option toggle.
-   - Light, Dark, and System theme states use descriptive SVG icons.
+   - The theme dropdown was replaced with a single button that changes between Light and Dark.
+   - Light and Dark theme states use descriptive SVG icons.
    - Theme selection continues to persist in `localStorage`.
    - The navigation and theme toggle remain responsive on mobile.
    - Tailwind CSS was added locally with source CSS in `static/input.css` and generated CSS in `static/styles.css`.

@@ -4,44 +4,29 @@
 
 @layer base {
   :root {
-    --app-bg: #f4f7fb;
-    --surface: #ffffff;
-    --surface-soft: #eef4f8;
-    --text: #111827;
-    --muted: #64748b;
-    --border: #dbe5ee;
-    --primary: #0f766e;
+    --app-bg: #faf6f0;
+    --surface: #fffaf3;
+    --surface-soft: #fcf3ec;
+    --text: #17130f;
+    --muted: #76695d;
+    --border: #e5d7c8;
+    --primary: #3b6ea8;
     --primary-contrast: #ffffff;
     --danger: #b91c1c;
     color-scheme: light;
   }
 
   :root[data-theme="dark"] {
-    --app-bg: #0f172a;
-    --surface: #172033;
-    --surface-soft: #111827;
-    --text: #f8fafc;
-    --muted: #a8b3c7;
-    --border: #334155;
-    --primary: #2dd4bf;
-    --primary-contrast: #042f2e;
+    --app-bg: #050505;
+    --surface: #0b0d0e;
+    --surface-soft: #111315;
+    --text: #f6f3ed;
+    --muted: #a7a29a;
+    --border: #25282b;
+    --primary: #38bdf8;
+    --primary-contrast: #04111d;
     --danger: #fca5a5;
     color-scheme: dark;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root[data-theme="system"] {
-      --app-bg: #0f172a;
-      --surface: #172033;
-      --surface-soft: #111827;
-      --text: #f8fafc;
-      --muted: #a8b3c7;
-      --border: #334155;
-      --primary: #2dd4bf;
-      --primary-contrast: #042f2e;
-      --danger: #fca5a5;
-      color-scheme: dark;
-    }
   }
 
   body {
@@ -76,25 +61,28 @@
     @apply mt-1 min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] placeholder:text-[var(--muted)];
   }
 
-  .theme-option[aria-pressed="true"] {
-    @apply text-[var(--text)];
+  .theme-button {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text)] shadow-sm transition hover:bg-[var(--surface-soft)];
   }
 
-  .theme-option[aria-pressed="true"] svg {
-    @apply text-[var(--primary)];
-  }
-
-  .theme-indicator {
-    left: 0.25rem;
-    width: calc((100% - 0.5rem) / 3);
-  }
-
-  .theme-option svg {
+  .theme-icon {
     fill: none;
     stroke: currentColor;
     stroke-linecap: round;
     stroke-linejoin: round;
     stroke-width: 1.8;
+  }
+
+  .theme-icon-sun {
+    @apply hidden;
+  }
+
+  :root[data-theme="dark"] .theme-icon-moon {
+    @apply hidden;
+  }
+
+  :root[data-theme="dark"] .theme-icon-sun {
+    @apply block;
   }
 
   .state-active {
@@ -131,26 +119,6 @@
 
   :root[data-theme="dark"] .state-activating {
     @apply text-amber-200;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root[data-theme="system"] .state-active {
-      @apply text-emerald-200;
-    }
-
-    :root[data-theme="system"] .state-inactive,
-    :root[data-theme="system"] .state-deactivating,
-    :root[data-theme="system"] .state-unknown {
-      @apply text-slate-200;
-    }
-
-    :root[data-theme="system"] .state-failed {
-      @apply text-red-200;
-    }
-
-    :root[data-theme="system"] .state-activating {
-      @apply text-amber-200;
-    }
   }
 }
 

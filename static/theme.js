@@ -1,7 +1,7 @@
 const STORAGE_KEY = "serviceManagerTheme";
-const validThemes = ["light", "dark", "system"];
-const themeOptions = document.querySelectorAll("[data-theme-choice]");
-const themeIndicator = document.querySelector(".theme-indicator");
+const validThemes = ["light", "dark"];
+const themeToggle = document.querySelector("[data-theme-toggle]");
+const themeToggleLabel = document.querySelector("[data-theme-toggle-label]");
 const hostDialog = document.getElementById("host-dialog");
 const dialogOpeners = document.querySelectorAll("[data-dialog-open]");
 const dialogClosers = document.querySelectorAll("[data-dialog-close]");
@@ -9,26 +9,20 @@ let lastDialogTrigger = null;
 
 function loadTheme() {
   const storedTheme = localStorage.getItem(STORAGE_KEY);
-  return validThemes.includes(storedTheme) ? storedTheme : "system";
-}
-
-function moveThemeIndicator(theme) {
-  if (!themeIndicator) {
-    return;
-  }
-
-  const index = validThemes.indexOf(theme);
-  themeIndicator.style.transform = `translateX(${index * 100}%)`;
+  return validThemes.includes(storedTheme) ? storedTheme : "light";
 }
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  moveThemeIndicator(theme);
 
-  themeOptions.forEach((option) => {
-    const isSelected = option.dataset.themeChoice === theme;
-    option.setAttribute("aria-pressed", String(isSelected));
-  });
+  if (!themeToggle || !themeToggleLabel) {
+    return;
+  }
+
+  const isDark = theme === "dark";
+  themeToggle.setAttribute("aria-pressed", String(isDark));
+  themeToggle.setAttribute("aria-label", isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro");
+  themeToggleLabel.textContent = isDark ? "Light" : "Dark";
 }
 
 function saveTheme(theme) {
@@ -56,8 +50,9 @@ function closeDialog(dialog) {
 
 applyTheme(loadTheme());
 
-themeOptions.forEach((option) => {
-  option.addEventListener("click", () => saveTheme(option.dataset.themeChoice));
+themeToggle?.addEventListener("click", () => {
+  const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  saveTheme(nextTheme);
 });
 
 dialogOpeners.forEach((opener) => {
