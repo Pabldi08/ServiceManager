@@ -177,7 +177,7 @@ nano ~/.ssh/config
 Añade:
 
 ```sshconfig
-Host raspberry
+Host 100.92.192.38
     HostName 100.92.192.38
     User pablo
     Port 22
