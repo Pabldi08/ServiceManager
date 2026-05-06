@@ -54,6 +54,9 @@
    - Light, Dark, and System theme states use descriptive SVG icons.
    - Theme selection continues to persist in `localStorage`.
    - The navigation and theme toggle remain responsive on mobile.
+   - Tailwind CSS was added locally with source CSS in `static/input.css` and generated CSS in `static/styles.css`.
+   - The host creation flow now uses an accessible native dialog opened from a compact plus button.
+   - The layout was redesigned as a compact local app shell that can later fit a desktop wrapper.
 
 ## Next Point: Add Logs and Action History
 

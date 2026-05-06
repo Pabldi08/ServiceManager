@@ -59,6 +59,30 @@ bun run test
 
 ---
 
+## Construir CSS con Tailwind
+
+Instala las dependencias frontend locales:
+
+```bash
+npm install
+```
+
+Genera el CSS final:
+
+```bash
+npm run build:css
+```
+
+Durante desarrollo puedes dejar Tailwind observando cambios:
+
+```bash
+npm run watch:css
+```
+
+El archivo fuente es `static/input.css` y el CSS generado se guarda en `static/styles.css`.
+
+---
+
 ## Estructura del proyecto
 
 - `data/service_manager.json`: datos persistentes creados por la app con hosts y servicios seleccionados.
@@ -68,8 +92,10 @@ bun run test
 - `app/storage.py`: guarda y carga la configuración editable desde la interfaz.
 - `app/hosts.py`: valida entradas SSH como `usuario@host` o `usuario@host:puerto`.
 - `templates/index.html`: estructura visual de la página.
-- `static/styles.css`: estilos de la página.
+- `static/input.css`: estilos fuente de Tailwind y pequenos componentes locales.
+- `static/styles.css`: CSS final generado por Tailwind.
 - `static/theme.js`: guarda el tema elegido en `localStorage`.
+- `tailwind.config.js`: configuracion minima de Tailwind.
 - `package.json`: comandos para lanzar y probar el proyecto usando Bun.
 
 ---
@@ -235,6 +261,16 @@ La interfaz incluye un selector de tema:
 `System Mode` usa la preferencia del sistema mediante `prefers-color-scheme`.
 
 La preferencia se guarda en `localStorage`, por lo que se mantiene al recargar la página.
+
+---
+
+## Preparación para app de escritorio
+
+La interfaz está organizada como una sola app local con datos persistidos en el equipo.
+
+Esto deja el proyecto mejor preparado para un futuro envoltorio de escritorio como PyWebView, Tauri o Electron.
+
+El empaquetado de escritorio todavía no está implementado.
 
 ---
 

@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --app-bg: #f4f7fb;
+    --surface: #ffffff;
+    --surface-soft: #eef4f8;
+    --text: #111827;
+    --muted: #64748b;
+    --border: #dbe5ee;
+    --primary: #0f766e;
+    --primary-contrast: #ffffff;
+    --danger: #b91c1c;
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    --app-bg: #0f172a;
+    --surface: #172033;
+    --surface-soft: #111827;
+    --text: #f8fafc;
+    --muted: #a8b3c7;
+    --border: #334155;
+    --primary: #2dd4bf;
+    --primary-contrast: #042f2e;
+    --danger: #fca5a5;
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root[data-theme="system"] {
+      --app-bg: #0f172a;
+      --surface: #172033;
+      --surface-soft: #111827;
+      --text: #f8fafc;
+      --muted: #a8b3c7;
+      --border: #334155;
+      --primary: #2dd4bf;
+      --primary-contrast: #042f2e;
+      --danger: #fca5a5;
+      color-scheme: dark;
+    }
+  }
+
+  body {
+    @apply min-h-screen bg-[var(--app-bg)] text-[var(--text)] antialiased;
+  }
+
+  button,
+  input,
+  select {
+    @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)];
+  }
+}
+
+@layer components {
+  .app-shell {
+    @apply mx-auto min-h-screen w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8;
+  }
+
+  .panel {
+    @apply rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm sm:p-5;
+  }
+
+  .btn-primary {
+    @apply inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-contrast)] transition hover:opacity-90;
+  }
+
+  .btn-secondary {
+    @apply inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--surface-soft)];
+  }
+
+  .field-control {
+    @apply mt-1 min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] placeholder:text-[var(--muted)];
+  }
+
+  .theme-option[aria-pressed="true"] {
+    @apply text-[var(--text)];
+  }
+
+  .theme-option[aria-pressed="true"] svg {
+    @apply text-[var(--primary)];
+  }
+
+  .theme-indicator {
+    left: 0.25rem;
+    width: calc((100% - 0.5rem) / 3);
+  }
+
+  .theme-option svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+  }
+
+  .state-active {
+    @apply border-emerald-500/40 bg-emerald-500/10 text-emerald-700;
+  }
+
+  .state-inactive,
+  .state-deactivating,
+  .state-unknown {
+    @apply border-slate-500/30 bg-slate-500/10 text-slate-700;
+  }
+
+  .state-failed {
+    @apply border-red-500/40 bg-red-500/10 text-red-700;
+  }
+
+  .state-activating {
+    @apply border-amber-500/40 bg-amber-500/10 text-amber-700;
+  }
+
+  :root[data-theme="dark"] .state-active {
+    @apply text-emerald-200;
+  }
+
+  :root[data-theme="dark"] .state-inactive,
+  :root[data-theme="dark"] .state-deactivating,
+  :root[data-theme="dark"] .state-unknown {
+    @apply text-slate-200;
+  }
+
+  :root[data-theme="dark"] .state-failed {
+    @apply text-red-200;
+  }
+
+  :root[data-theme="dark"] .state-activating {
+    @apply text-amber-200;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root[data-theme="system"] .state-active {
+      @apply text-emerald-200;
+    }
+
+    :root[data-theme="system"] .state-inactive,
+    :root[data-theme="system"] .state-deactivating,
+    :root[data-theme="system"] .state-unknown {
+      @apply text-slate-200;
+    }
+
+    :root[data-theme="system"] .state-failed {
+      @apply text-red-200;
+    }
+
+    :root[data-theme="system"] .state-activating {
+      @apply text-amber-200;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

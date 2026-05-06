@@ -1,6 +1,11 @@
 {
   "scripts": {
+    "build:css": "tailwindcss -i ./static/input.css -o ./static/styles.css --minify",
+    "watch:css": "tailwindcss -i ./static/input.css -o ./static/styles.css --watch",
     "start": "python3 run.py",
     "test": "python3 -m unittest"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
   }
 }

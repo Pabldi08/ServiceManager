@@ -4,38 +4,48 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ServiceManager</title>
+    <script>
+      (() => {
+        const theme = localStorage.getItem("serviceManagerTheme") || "system";
+        document.documentElement.dataset.theme = ["light", "dark", "system"].includes(theme) ? theme : "system";
+      })();
+    </script>
     <script src="/static/theme.js" defer></script>
     <link rel="stylesheet" href="/static/styles.css">
   </head>
   <body>
-    <main class="app">
-      <header class="app-header">
-        <nav class="top-nav" aria-label="Navegacion principal">
-          <div class="brand-block">
-          <p>SSH + systemctl</p>
-          <h1>ServiceManager</h1>
-        </div>
+    <div class="app-shell">
+      <header class="sticky top-0 z-20 -mx-4 border-b border-[var(--border)] bg-[var(--app-bg)]/90 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <nav class="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Navegacion principal">
+          <div class="flex items-center gap-3">
+            <div class="flex size-11 items-center justify-center rounded-2xl bg-[var(--primary)] text-lg font-black text-[var(--primary-contrast)] shadow-sm" aria-hidden="true">SM</div>
+            <div>
+              <p class="text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted)]">SSH + systemctl</p>
+              <h1 class="text-xl font-bold tracking-tight text-[var(--text)] sm:text-2xl">ServiceManager</h1>
+            </div>
+          </div>
 
-          <div class="theme-control" aria-label="Selector de tema">
-            <span class="theme-title">Tema</span>
-            <div class="theme-toggle" role="group" aria-label="Seleccionar modo de color">
-              <button class="theme-option" type="button" data-theme-choice="light" aria-pressed="false">
-                <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+          <div class="flex flex-col gap-2 sm:items-end">
+            
+            <div class="theme-toggle relative grid grid-cols-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-1" role="group" aria-label="Seleccionar modo de color">
+              <span class="theme-indicator pointer-events-none absolute bottom-1 top-1 rounded-xl bg-[var(--surface)] shadow-sm transition-transform duration-200" aria-hidden="true"></span>
+              <button class="theme-option relative z-10 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-[var(--muted)] transition" type="button" data-theme-choice="light" aria-pressed="false">
+                <svg class="size-4" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
                   <circle cx="12" cy="12" r="4"></circle>
                   <path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"></path>
                 </svg>
                 <span>Light</span>
               </button>
 
-              <button class="theme-option" type="button" data-theme-choice="dark" aria-pressed="false">
-                <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+              <button class="theme-option relative z-10 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-[var(--muted)] transition" type="button" data-theme-choice="dark" aria-pressed="false">
+                <svg class="size-4" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
                   <path d="M20.4 14.6A8.5 8.5 0 0 1 9.4 3.6 8.5 8.5 0 1 0 20.4 14.6Z"></path>
                 </svg>
                 <span>Dark</span>
               </button>
 
-              <button class="theme-option" type="button" data-theme-choice="system" aria-pressed="false">
-                <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+              <button class="theme-option relative z-10 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-[var(--muted)] transition" type="button" data-theme-choice="system" aria-pressed="false">
+                <svg class="size-4" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
                   <rect x="3" y="4" width="18" height="12" rx="2"></rect>
                   <path d="M8 20h8M12 16v4"></path>
                 </svg>
@@ -46,65 +56,94 @@
         </nav>
       </header>
 
-      <section class="panel">
-        <h2>Anadir host SSH</h2>
-        <p>Introduce el host con formato <code>usuario@host</code> o <code>usuario@host:puerto</code>. La app usa claves SSH ya configuradas; no guarda passwords.</p>
-        <form method="post" action="/hosts" class="host-form">
-          <div class="field">
-            <label for="host-input">Conexion SSH</label>
-            <input id="host-input" name="host_input" placeholder="pablo@192.168.1.50:22" required>
+      <main class="grid gap-4 py-5 lg:grid-cols-[18rem_minmax(0,1fr)]" aria-labelledby="app-title">
+        <h2 id="app-title" class="sr-only">ServiceManager dashboard</h2>
+
+        <aside class="space-y-4">
+          <section class="panel">
+            <div class="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 class="text-base font-bold text-[var(--text)]">Hosts</h2>
+                <p class="text-sm text-[var(--muted)]">SSH keys only. No passwords.</p>
+              </div>
+              <button class="btn-primary size-10 shrink-0 rounded-full p-0 text-xl" type="button" data-dialog-open="host-dialog" aria-label="Anadir host SSH">+</button>
+            </div>
+            {{ host_list }}
+          </section>
+
+          <section class="panel">
+            <h2 class="text-base font-bold text-[var(--text)]">Selected host</h2>
+            <p class="mt-1 truncate text-sm font-semibold text-[var(--primary)]">{{ selected_host }}</p>
+            <form method="get" action="/" class="mt-4 grid gap-3">
+              <label class="text-sm font-semibold text-[var(--text)]" for="host">Host</label>
+              <select class="field-control" id="host" name="host">
+                {{ host_options }}
+              </select>
+              <button class="btn-secondary" type="submit">Select</button>
+            </form>
+          </section>
+        </aside>
+
+        <div class="space-y-4">
+          <section class="panel">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 class="text-lg font-bold text-[var(--text)]">Managed services</h2>
+                <p class="text-sm text-[var(--muted)]">Run allowed actions for the selected host.</p>
+              </div>
+              <form method="post" action="/status">
+                <input type="hidden" name="host" value="{{ selected_host }}">
+                <button class="btn-secondary" type="submit">Refresh status</button>
+              </form>
+            </div>
+            <div class="mt-4">
+              {{ service_list }}
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 class="text-lg font-bold text-[var(--text)]">Available services</h2>
+                <p class="text-sm text-[var(--muted)]">List remote units, then choose what to manage.</p>
+              </div>
+              <form method="post" action="/discover">
+                <input type="hidden" name="host" value="{{ selected_host }}">
+                <button class="btn-primary" type="submit">List services</button>
+              </form>
+            </div>
+          </section>
+
+          <div aria-live="polite">
+            {{ result }}
           </div>
-
-          <button type="submit">Anadir host</button>
-        </form>
-        {{ host_list }}
-      </section>
-
-      <section class="panel">
-        <h2>Servidor seleccionado</h2>
-        <form method="get" action="/" class="host-form">
-          <div class="field">
-            <label for="host">Servidor</label>
-            <select id="host" name="host">
-              {{ host_options }}
-            </select>
-          </div>
-
-          <button type="submit">Seleccionar</button>
-        </form>
-      </section>
-
-      <section class="panel services-panel">
-        <h2>Servicios registrados</h2>
-        <p>Lista completa de servicios configurados para el host seleccionado. Cada fila permite ejecutar una de las cinco acciones permitidas.</p>
-        <div class="service-list">
-          {{ service_list }}
+          {{ status_dashboard }}
+          {{ discovered_services }}
         </div>
-      </section>
+      </main>
+    </div>
 
-      <section class="panel discovery-panel">
-        <h2>Seleccionar servicios</h2>
-        <p>Lista servicios disponibles en <strong>{{ selected_host }}</strong> para que decidas manualmente cuales gestionar.</p>
-        <form method="post" action="/discover" class="discover-form">
-          <input type="hidden" name="host" value="{{ selected_host }}">
+    <dialog id="host-dialog" class="w-[min(92vw,28rem)] rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-0 text-[var(--text)] shadow-app backdrop:bg-slate-950/50">
+      <form method="post" action="/hosts" class="grid gap-5 p-5">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold">Add SSH host</h2>
+            <p class="mt-1 text-sm text-[var(--muted)]">Use an existing SSH key setup.</p>
+          </div>
+          <button class="dialog-close-button" type="button" data-dialog-close aria-label="Cerrar dialogo">x</button>
+        </div>
 
-          <button type="submit">Listar servicios</button>
-        </form>
-      </section>
+        <div>
+          <label class="text-sm font-semibold" for="host-input">SSH connection</label>
+          <input class="field-control" id="host-input" name="host_input" placeholder="pablo@192.168.1.50:22" required autofocus>
+          <p class="mt-2 text-xs text-[var(--muted)]">Format: user@host or user@host:port.</p>
+        </div>
 
-      <section class="panel status-panel">
-        <h2>Panel de estado</h2>
-        <p>Consulta el estado actual de todos los servicios registrados en <strong>{{ selected_host }}</strong>. Esta accion solo lee informacion.</p>
-        <form method="post" action="/status" class="status-form">
-          <input type="hidden" name="host" value="{{ selected_host }}">
-
-          <button type="submit">Actualizar estado</button>
-        </form>
-      </section>
-
-      {{ result }}
-      {{ status_dashboard }}
-      {{ discovered_services }}
-    </main>
+        <div class="flex justify-end gap-2">
+          <button class="btn-secondary" type="button" data-dialog-close>Cancel</button>
+          <button class="btn-primary" type="submit">Add host</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>
