@@ -29,7 +29,15 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             query = parse_qs(parsedUrl.query)
             selected = {"host": query.get("host", [""])[0]}
-            self.sendHtml(renderIndex(selected))
+            
+            statuses = None
+            if selected["host"]:
+                try:
+                    statuses = getServiceStatuses(selected["host"])
+                except ValueError:
+                    statuses = None
+            
+            self.sendHtml(renderIndex(selected, statuses=statuses))
             return
 
         if path == "/static/styles.css":

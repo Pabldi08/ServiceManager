@@ -8,6 +8,25 @@ from app.services import getAllowedActions, getAllowedServices
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATE_PATH = BASE_DIR / "templates" / "index.html"
 
+ACTION_ICONS = {
+    "start": """
+      <svg class="action-icon" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+        <path d="M8 5.5v13l10-6.5-10-6.5Z"></path>
+      </svg>
+    """,
+    "stop": """
+      <svg class="action-icon" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+        <rect x="7" y="7" width="10" height="10" rx="1.5"></rect>
+      </svg>
+    """,
+    "restart": """
+      <svg class="action-icon" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+        <path d="M19 12a7 7 0 1 1-2.05-4.95"></path>
+        <path d="M19 4v5h-5"></path>
+      </svg>
+    """,
+}
+
 
 def buildOptions(items, selectedValue=None):
     options = []
@@ -70,7 +89,34 @@ def renderHostList(hosts):
     return f"<ul class=\"grid gap-2\">{''.join(items)}</ul>"
 
 
-def renderServiceList(selectedHost):
+def renderActionButton(action):
+    escapedAction = escape(action)
+
+    if action in ACTION_ICONS:
+        return f"""
+              <button class="action-icon-button" type="submit" name="action" value="{escapedAction}" aria-label="{escapedAction}" title="{escapedAction}">
+                {ACTION_ICONS[action]}
+                <span class="sr-only">{escapedAction}</span>
+              </button>
+        """
+
+    return f"""
+              <button class="btn-secondary min-h-9 px-3 text-xs" type="submit" name="action" value="{escapedAction}">
+                {escapedAction}
+              </button>
+    """
+
+
+def renderServiceStatusDot(serviceKey, statuses=None):
+    statusByKey = {status["key"]: status for status in statuses or []}
+    state = statusByKey.get(serviceKey, {}).get("state", "unknown")
+    dotClass = "service-status-dot-active" if state == "active" else "service-status-dot-inactive"
+    label = "activo" if state == "active" else "inactivo"
+
+    return f'<span class="service-status-dot {dotClass}" title="Servicio {label}" aria-label="Servicio {label}"></span>'
+
+
+def renderServiceList(selectedHost, statuses=None):
     if not selectedHost:
         return """
         <div class="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-soft)] p-6 text-center">
@@ -96,19 +142,23 @@ def renderServiceList(selectedHost):
         buttons = []
 
         for action in actions:
-            buttons.append(f"""
-              <button class="btn-secondary min-h-9 px-3 text-xs" type="submit" name="action" value="{escape(action)}">
-                {escape(action)}
-              </button>
-            """)
+            if action == "is-active":
+                continue
+
+            buttons.append(renderActionButton(action))
 
         rows.append(f"""
           <article class="grid gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 lg:grid-cols-[minmax(10rem,1fr)_minmax(0,2fr)] lg:items-center">
-            <div class="min-w-0">
-              <h3 class="truncate text-base font-bold text-[var(--text)]">{escape(serviceKey)}</h3>
+            <div class="flex min-w-0 items-center gap-3">
+              <div>
+                {renderServiceStatusDot(serviceKey, statuses)}
+              </div>
+              <div class="min-w-0">
+                <h3 class="truncate text-base font-bold text-[var(--text)]">{escape(serviceKey)}</h3>
               <p class="mt-1 truncate font-mono text-xs text-[var(--muted)]">{escape(serviceName)}</p>
+              </div>
             </div>
-            <form method="post" action="/run" class="grid gap-2 sm:grid-cols-5">
+            <form method="post" action="/run" class="flex flex-wrap gap-2 lg:justify-end">
               <input type="hidden" name="host" value="{escape(selectedHost)}">
               <input type="hidden" name="service" value="{escape(serviceKey)}">
               {''.join(buttons)}
@@ -210,7 +260,7 @@ def renderIndex(selected=None, result=None, discoveredServices=None, statuses=No
     html = html.replace("{{ host_options }}", buildOptions(hosts, selectedHost))
     html = html.replace("{{ selected_host }}", escape(selectedHost))
     html = html.replace("{{ host_list }}", renderHostList(getHosts()))
-    html = html.replace("{{ service_list }}", renderServiceList(selectedHost))
+    html = html.replace("{{ service_list }}", renderServiceList(selectedHost, statuses))
     html = html.replace(
         "{{ discovered_services }}",
         renderDiscoveredServices(selectedHost, discoveredServices),

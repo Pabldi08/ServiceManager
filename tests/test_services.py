@@ -152,18 +152,25 @@ ssh.service loaded active running OpenBSD Secure Shell server
         self.assertEqual("unknown", parseServiceState("unexpected\n"))
         self.assertEqual("unknown", parseServiceState(""))
 
-    def test_service_list_renders_all_action_buttons(self):
+    def test_service_list_renders_action_buttons_and_status_dots(self):
         services = {"ssh": "ssh.service", "nginx": "nginx.service"}
         actions = ["status", "is-active", "start", "stop", "restart"]
+        statuses = [
+            {"key": "ssh", "state": "active"},
+            {"key": "nginx", "state": "inactive"},
+        ]
 
         with patch("app.views.getAllowedServices", return_value=services):
             with patch("app.views.getAllowedActions", return_value=actions):
-                html = renderServiceList("raspberry")
+                html = renderServiceList("raspberry", statuses)
 
-        for action in actions:
+        for action in ["status", "start", "stop", "restart"]:
             self.assertIn(f'value="{action}"', html)
 
-        self.assertEqual(len(services) * len(actions), html.count('name="action"'))
+        self.assertNotIn('value="is-active"', html)
+        self.assertIn("service-status-dot-active", html)
+        self.assertIn("service-status-dot-inactive", html)
+        self.assertEqual(len(services) * 4, html.count('name="action"'))
 
 
 if __name__ == "__main__":

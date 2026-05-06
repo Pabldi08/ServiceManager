@@ -57,6 +57,31 @@
     @apply inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--surface-soft)];
   }
 
+  .action-icon-button {
+    @apply inline-flex size-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--primary)] transition hover:bg-[var(--surface-soft)] hover:shadow-sm;
+  }
+
+  .action-icon {
+    @apply size-5;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.9;
+  }
+
+  .service-status-dot {
+    @apply block size-3 rounded-full ring-4 ring-[var(--surface)];
+  }
+
+  .service-status-dot-active {
+    @apply bg-emerald-500 shadow-[0_0_0.9rem_rgba(16,185,129,0.55)];
+  }
+
+  .service-status-dot-inactive {
+    @apply bg-red-500 shadow-[0_0_0.9rem_rgba(239,68,68,0.45)];
+  }
+
   .field-control {
     @apply mt-1 min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] placeholder:text-[var(--muted)];
   }

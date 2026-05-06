@@ -57,6 +57,7 @@
    - Tailwind CSS was added locally with source CSS in `static/input.css` and generated CSS in `static/styles.css`.
    - The host creation flow now uses an accessible native dialog opened from a compact plus button.
    - The layout was redesigned as a compact local app shell that can later fit a desktop wrapper.
+   - Service cards use theme-aware SVG icons for start, stop, and restart, and a red/green status dot instead of an `is-active` action button.
 
 ## Next Point: Add Logs and Action History
 
