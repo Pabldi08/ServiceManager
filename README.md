@@ -37,7 +37,13 @@ python3 run.py
 
 ## Ejecutar con Bun
 
-También se puede lanzar con Bun:
+Instalar bun:
+
+```bash
+curl -fsSL https://bun.com/install | bash
+```
+
+Lanzar con Bun:
 
 ```bash
 bun run start
