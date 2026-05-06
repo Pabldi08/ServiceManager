@@ -4,7 +4,26 @@ from app.config import getHost
 from app.services import validateAction, validateService
 
 
+def makeCommandResult(returncode, stdout="", stderr=""):
+    return {
+        "returncode": returncode,
+        "stdout": stdout.strip(),
+        "stderr": stderr.strip(),
+    }
+
+
+def validateRemoteCommand(remoteCommand):
+    if not isinstance(remoteCommand, list) or not remoteCommand:
+        raise ValueError("El comando remoto debe ser una lista no vacia")
+
+    for argument in remoteCommand:
+        if not isinstance(argument, str) or not argument:
+            raise ValueError("Cada argumento del comando remoto debe ser texto")
+
+
 def buildSshCommand(hostData, remoteCommand):
+    validateRemoteCommand(remoteCommand)
+
     user = hostData["user"]
     host = hostData["host"]
     port = str(hostData.get("port", 22))
@@ -32,10 +51,7 @@ def buildSshCommand(hostData, remoteCommand):
     return command
 
 
-def runRemoteCommand(hostName, remoteCommand, timeout=30):
-    hostData = getHost(hostName)
-    command = buildSshCommand(hostData, remoteCommand)
-
+def executeCommand(command, timeout=30):
     try:
         result = subprocess.run(
             command,
@@ -44,23 +60,23 @@ def runRemoteCommand(hostName, remoteCommand, timeout=30):
             timeout=timeout,
         )
     except FileNotFoundError:
-        return {
-            "returncode": 127,
-            "stdout": "",
-            "stderr": "No se encontro el comando ssh en este equipo",
-        }
+        return makeCommandResult(
+            127,
+            stderr="No se encontro el comando ssh en este equipo",
+        )
     except subprocess.TimeoutExpired:
-        return {
-            "returncode": 124,
-            "stdout": "",
-            "stderr": "Tiempo de espera agotado al conectar por SSH",
-        }
+        return makeCommandResult(
+            124,
+            stderr="Tiempo de espera agotado al conectar por SSH",
+        )
 
-    return {
-        "returncode": result.returncode,
-        "stdout": result.stdout.strip(),
-        "stderr": result.stderr.strip(),
-    }
+    return makeCommandResult(result.returncode, result.stdout, result.stderr)
+
+
+def runRemoteCommand(hostName, remoteCommand, timeout=30):
+    hostData = getHost(hostName)
+    command = buildSshCommand(hostData, remoteCommand)
+    return executeCommand(command, timeout)
 
 
 def runRemoteSystemctl(hostName, action, serviceName):

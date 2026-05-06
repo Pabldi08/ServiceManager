@@ -6,7 +6,7 @@ from unittest.mock import patch
 from app.hosts import parseHostInput
 from app.storage import addHost, addHostServices, loadData, makeServiceKey
 from app.discovery import parseServiceUnits
-from app.remote import buildSshCommand
+from app.remote import buildSshCommand, makeCommandResult, validateRemoteCommand
 from app.services import getServiceUnit, validateAction, validateService
 from app.status import parseServiceState
 from app.views import renderServiceList
@@ -120,6 +120,28 @@ ssh.service loaded active running OpenBSD Secure Shell server
         self.assertIn("-i", command)
         self.assertIn("~/.ssh/id_rsa", command)
         self.assertIn("pablo@192.168.1.50", command)
+
+    def test_ssh_command_rejects_invalid_remote_command(self):
+        hostData = {"user": "pablo", "host": "192.168.1.50", "port": 22}
+
+        with self.assertRaises(ValueError):
+            buildSshCommand(hostData, "systemctl status ssh.service")
+
+        with self.assertRaises(ValueError):
+            buildSshCommand(hostData, [])
+
+        with self.assertRaises(ValueError):
+            buildSshCommand(hostData, ["systemctl", ""])
+
+    def test_remote_command_validation_accepts_argument_lists(self):
+        validateRemoteCommand(["systemctl", "status", "ssh.service"])
+
+    def test_command_result_has_consistent_shape(self):
+        result = makeCommandResult(0, " output\n", " error\n")
+
+        self.assertEqual(0, result["returncode"])
+        self.assertEqual("output", result["stdout"])
+        self.assertEqual("error", result["stderr"])
 
     def test_service_status_output_is_parsed(self):
         self.assertEqual("active", parseServiceState("active\n"))

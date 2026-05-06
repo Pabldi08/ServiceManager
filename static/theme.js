@@ -1,12 +1,24 @@
 const STORAGE_KEY = "serviceManagerTheme";
-const themeSelect = document.getElementById("theme-select");
+const themeOptions = document.querySelectorAll("[data-theme-choice]");
+const validThemes = ["light", "dark", "system"];
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
+
+  themeOptions.forEach((option) => {
+    const isSelected = option.dataset.themeChoice === theme;
+    option.setAttribute("aria-pressed", String(isSelected));
+  });
 }
 
 function loadTheme() {
-  return localStorage.getItem(STORAGE_KEY) || "system";
+  const storedTheme = localStorage.getItem(STORAGE_KEY);
+
+  if (validThemes.includes(storedTheme)) {
+    return storedTheme;
+  }
+
+  return "system";
 }
 
 function saveTheme(theme) {
@@ -17,7 +29,6 @@ function saveTheme(theme) {
 const currentTheme = loadTheme();
 applyTheme(currentTheme);
 
-if (themeSelect) {
-  themeSelect.value = currentTheme;
-  themeSelect.addEventListener("change", () => saveTheme(themeSelect.value));
-}
+themeOptions.forEach((option) => {
+  option.addEventListener("click", () => saveTheme(option.dataset.themeChoice));
+});

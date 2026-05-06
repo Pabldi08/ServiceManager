@@ -41,7 +41,51 @@
    - Services are manually selected by the user before being managed.
    - The UI includes Light, Dark, and System theme modes saved in `localStorage`.
 
-## Next Point: Safer Shared Command Layer
+7. Safer shared command layer
+   - SSH command construction and execution remain centralized in `app/remote.py`.
+   - Remote commands are validated as non-empty argument lists.
+   - Command execution returns one consistent result shape.
+   - Command construction remains separate from execution.
+   - Tests cover command validation and result formatting.
+
+8. Improve the web interface
+   - The heading was refactored into a `<nav>` layout using Flexbox.
+   - The theme dropdown was replaced with a three-option toggle.
+   - Light, Dark, and System theme states use descriptive SVG icons.
+   - Theme selection continues to persist in `localStorage`.
+   - The navigation and theme toggle remain responsive on mobile.
+
+## Next Point: Add Logs and Action History
+
+Goal: record service actions so the user can review recent activity.
+
+Suggested steps:
+
+1. Save each service action with host, service, action, return code, and timestamp.
+2. Store history in local app data without passwords or secrets.
+3. Show recent actions in the interface.
+4. Keep the log readable and beginner-friendly.
+5. Add tests for history persistence helpers.
+
+Important safety rule: logs should not store sensitive command output unless explicitly needed.
+
+## Completed Plan Details
+
+### Improve the Web Interface
+
+Goal: make the interface clearer and easier to use as the app grows.
+
+Suggested steps:
+
+1. Review the page layout now that hosts, services, status, and theme controls exist.
+2. Group related actions more clearly.
+3. Improve empty states for first-time users.
+4. Keep mobile layout readable.
+5. Avoid visual complexity that makes the project harder to understand.
+
+Important safety rule: UI improvements should not add new service actions or dangerous commands.
+
+### Safer Shared Command Layer
 
 Goal: make SSH command execution safer and easier to reuse as more features are added.
 
@@ -54,8 +98,6 @@ Suggested steps:
 5. Avoid adding dangerous commands or broad shell execution.
 
 Important safety rule: do not use `shell=True` for remote command building. Keep commands as argument lists.
-
-## Completed Plan Details
 
 ### Separate Backend Logic More Clearly
 
@@ -116,6 +158,4 @@ Important safety rule: discovery should not automatically allow every remote ser
 
 ## Later Points
 
-6. Improve the web interface.
 7. Add persistence for discovered services.
-8. Add logs and action history.
