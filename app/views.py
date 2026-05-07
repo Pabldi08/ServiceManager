@@ -279,11 +279,11 @@ def renderServiceManagementDialog(selectedHost=None, discoveredServices=None):
         escapedService = escape(serviceName)
         includedRows.append(f"""
           <li class="service-dialog-row">
-            <div class="min-w-0">
+            <div class="min-w-0 flex-1">
               <strong class="block truncate text-sm text-[var(--text)]">{escapedKey}</strong>
               <span class="block truncate font-mono text-xs text-[var(--muted)]">{escapedService}</span>
             </div>
-            <form method="post" action="/delete-service">
+            <form class="shrink-0" method="post" action="/delete-service">
               <input type="hidden" name="host" value="{escape(selectedHost or '')}">
               <input type="hidden" name="service" value="{escapedKey}">
               {hiddenDiscoveredServices}
@@ -299,11 +299,11 @@ def renderServiceManagementDialog(selectedHost=None, discoveredServices=None):
         escapedKey = escape(serviceName.removesuffix(".service"))
         availableRows.append(f"""
           <li class="service-dialog-row">
-            <div class="min-w-0">
+            <div class="min-w-0 flex-1">
               <strong class="block truncate text-sm text-[var(--text)]">{escapedKey}</strong>
               <span class="block truncate font-mono text-xs text-[var(--muted)]">{escapedService}</span>
             </div>
-            <form method="post" action="/register-services">
+            <form class="shrink-0" method="post" action="/register-services">
               <input type="hidden" name="host" value="{escape(selectedHost or '')}">
               <input type="hidden" name="services" value="{escapedService}">
               {hiddenDiscoveredServices}
@@ -335,17 +335,17 @@ def renderServiceManagementDialog(selectedHost=None, discoveredServices=None):
           <button class="btn-secondary min-h-9 px-3" type="button" data-dialog-close>Close</button>
         </div>
 
-        <div class="grid min-h-0 gap-4 md:grid-cols-2">
+        <div class="grid min-w-0 min-h-0 gap-4 md:grid-cols-2">
           <section class="service-dialog-section">
             <h3 class="text-sm font-bold uppercase tracking-wide text-[var(--muted)]">Included</h3>
-            <ul class="mt-3 grid max-h-[55vh] gap-2 overflow-auto pr-1">
+            <ul class="mt-3 grid max-h-[55vh] min-w-0 gap-2 overflow-y-auto overflow-x-hidden pr-1">
               {''.join(includedRows)}
             </ul>
           </section>
 
           <section class="service-dialog-section">
             <h3 class="text-sm font-bold uppercase tracking-wide text-[var(--muted)]">Available to add</h3>
-            <ul class="mt-3 grid max-h-[55vh] gap-2 overflow-auto pr-1">
+            <ul class="mt-3 grid max-h-[55vh] min-w-0 gap-2 overflow-y-auto overflow-x-hidden pr-1">
               {''.join(availableRows)}
             </ul>
           </section>

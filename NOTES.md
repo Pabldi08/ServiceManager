@@ -75,6 +75,7 @@
    - Included services can be removed with a trash icon button.
    - Tests cover host deletion, service deletion, and the new service-management dialog rendering.
    - The service-management dialog now uses English labels and matching row layouts for included and available services.
+   - The service-management dialog now prevents horizontal overflow when available service names are long.
 
 ## Next Point: Add Logs and Action History
 
