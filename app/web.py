@@ -324,11 +324,16 @@ def getServerPort(defaultPort=5500):
         raise ValueError("La variable PORT debe ser un numero") from error
 
 
+def createServer(host="127.0.0.1", port=None):
+    port = port or getServerPort()
+    return ThreadingHTTPServer((host, port), ServiceManagerHandler)
+
+
 def runServer(host="127.0.0.1", port=None):
     port = port or getServerPort()
 
     try:
-        server = ThreadingHTTPServer((host, port), ServiceManagerHandler)
+        server = createServer(host, port)
     except OSError as error:
         if error.errno == 98:
             print(

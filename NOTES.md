@@ -77,6 +77,12 @@
    - The service-management dialog now uses English labels and matching row layouts for included and available services.
    - The service-management dialog now prevents horizontal overflow when available service names are long.
 
+11. Add desktop app launcher
+   - `desktop.py` starts the local web server in a background thread.
+   - The app can open in a native desktop window with pywebview.
+   - `run.py` remains the development/browser launcher.
+   - The desktop launcher shuts down the local server when the window closes.
+
 ## Next Point: Add Logs and Action History
 
 Goal: record service actions so the user can review recent activity.
