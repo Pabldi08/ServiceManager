@@ -3,3 +3,9 @@ __pycache__/
 .codex-server*.log
 data/service_manager.json
 node_modules/
+.venv/
+__pycache__/
+*.pyc
+dist/
+build/
+*.spec
