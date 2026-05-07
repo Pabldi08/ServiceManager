@@ -75,26 +75,19 @@
                 <h2 class="text-lg font-bold text-[var(--text)]">Managed services</h2>
                 <p class="text-sm text-[var(--muted)]">Run allowed actions for the selected host.</p>
               </div>
+              <div class="flex flex-wrap gap-2">
+              <form method="post" action="/discover">
+                <input type="hidden" name="host" value="{{ selected_host }}">
+                <button class="btn-primary" type="submit">Manage services</button>
+              </form>
               <form method="post" action="/status">
                 <input type="hidden" name="host" value="{{ selected_host }}">
                 <button class="btn-secondary" type="submit">Refresh status</button>
               </form>
+              </div>
             </div>
             <div class="mt-4">
               {{ service_list }}
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 class="text-lg font-bold text-[var(--text)]">Available services</h2>
-                <p class="text-sm text-[var(--muted)]">List remote units, then choose what to manage.</p>
-              </div>
-              <form method="post" action="/discover">
-                <input type="hidden" name="host" value="{{ selected_host }}">
-                <button class="btn-primary" type="submit">List services</button>
-              </form>
             </div>
           </section>
 

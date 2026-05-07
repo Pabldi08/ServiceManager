@@ -4,18 +4,36 @@ from pathlib import Path
 import sys
 from urllib.parse import parse_qs, urlparse
 
-from app.config import addServices
+from app.config import addServices, deleteService, getHosts
 from app.discovery import listAvailableServices
 from app.hosts import parseHostInput
 from app.remote import runRemoteSystemctl
 from app.services import getServiceUnit
 from app.status import getServiceStatuses
-from app.storage import addHost
+from app.storage import addHost, deleteHost
 from app.views import renderIndex
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
+
+
+def getSelectedHost(hostName=""):
+    if hostName:
+        return hostName
+
+    hosts = getHosts()
+    return next(iter(hosts), "")
+
+
+def getSafeServiceStatuses(hostName):
+    if not hostName:
+        return None
+
+    try:
+        return getServiceStatuses(hostName)
+    except ValueError:
+        return None
 
 
 class ServiceManagerHandler(BaseHTTPRequestHandler):
@@ -28,14 +46,8 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
 
         if path in ("/", "/index.html"):
             query = parse_qs(parsedUrl.query)
-            selected = {"host": query.get("host", [""])[0]}
-            
-            statuses = None
-            if selected["host"]:
-                try:
-                    statuses = getServiceStatuses(selected["host"])
-                except ValueError:
-                    statuses = None
+            selected = {"host": getSelectedHost(query.get("host", [""])[0])}
+            statuses = getSafeServiceStatuses(selected["host"])
             
             self.sendHtml(renderIndex(selected, statuses=statuses))
             return
@@ -61,12 +73,20 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
             self.handleAddHost()
             return
 
+        if path == "/delete-host":
+            self.handleDeleteHost()
+            return
+
         if path == "/discover":
             self.handleDiscover()
             return
 
         if path == "/register-services":
             self.handleRegisterServices()
+            return
+
+        if path == "/delete-service":
+            self.handleDeleteService()
             return
 
         if path == "/status":
@@ -97,6 +117,29 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
 
         self.sendHtml(renderIndex(selected, result))
 
+    def handleDeleteHost(self):
+        form = self.readForm()
+        hostName = form.get("host", [""])[0]
+
+        try:
+            deletedHost = deleteHost(hostName)
+            selected = {"host": getSelectedHost()}
+            result = {
+                "returncode": 0,
+                "stdout": f"Host eliminado: {deletedHost}",
+                "stderr": "",
+            }
+        except ValueError as error:
+            selected = {"host": getSelectedHost(hostName)}
+            result = {
+                "returncode": 1,
+                "stdout": "",
+                "stderr": str(error),
+            }
+
+        statuses = getSafeServiceStatuses(selected["host"])
+        self.sendHtml(renderIndex(selected, result, statuses=statuses))
+
     def handleRun(self):
         form = self.readForm()
         selected = {
@@ -119,12 +162,7 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
                 "stderr": str(error),
             }
 
-        statuses = None
-        if selected["action"] == "is-active":
-            try:
-                statuses = getServiceStatuses(selected["host"])
-            except ValueError:
-                statuses = None
+        statuses = getSafeServiceStatuses(selected["host"])
 
         self.sendHtml(renderIndex(selected, result, statuses=statuses))
 
@@ -136,7 +174,7 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
             statuses = getServiceStatuses(selected["host"])
             result = {
                 "returncode": 0,
-                "stdout": f"Estados consultados: {len(statuses)} servicios",
+                "stdout": f"Service states checked: {len(statuses)} services",
                 "stderr": "",
             }
         except ValueError as error:
@@ -168,37 +206,81 @@ class ServiceManagerHandler(BaseHTTPRequestHandler):
                 "stdout": "",
                 "stderr": discovery["stderr"],
             }
-            self.sendHtml(renderIndex(selected, result))
+            self.sendHtml(renderIndex(selected, result, discoveredServices=[]))
             return
 
         result = {
             "returncode": 0,
-            "stdout": f"Servicios disponibles encontrados: {len(discovery['services'])}",
+            "stdout": f"Available services found: {len(discovery['services'])}",
             "stderr": "",
         }
-        self.sendHtml(renderIndex(selected, result, discovery["services"]))
+        self.sendHtml(
+            renderIndex(
+                selected,
+                result,
+                discoveredServices=discovery["services"],
+                statuses=getSafeServiceStatuses(selected["host"]),
+            )
+        )
 
     def handleRegisterServices(self):
         form = self.readForm()
         selected = {"host": form.get("host", [""])[0]}
         serviceNames = form.get("services", [])
+        discoveredServices = form.get("discovered_services")
 
         if not serviceNames:
             result = {
                 "returncode": 1,
                 "stdout": "",
-                "stderr": "No se seleccionaron servicios para registrar",
+                "stderr": "No services selected to register",
             }
-            self.sendHtml(renderIndex(selected, result))
+            self.sendHtml(renderIndex(selected, result, discoveredServices=discoveredServices))
             return
 
         addedServices = addServices(selected["host"], serviceNames)
         result = {
             "returncode": 0,
-            "stdout": f"Servicios nuevos registrados: {len(addedServices)}",
+            "stdout": f"New services registered: {len(addedServices)}",
             "stderr": "",
         }
-        self.sendHtml(renderIndex(selected, result))
+        self.sendHtml(
+            renderIndex(
+                selected,
+                result,
+                discoveredServices=discoveredServices,
+                statuses=getSafeServiceStatuses(selected["host"]),
+            )
+        )
+
+    def handleDeleteService(self):
+        form = self.readForm()
+        selected = {"host": form.get("host", [""])[0]}
+        serviceKey = form.get("service", [""])[0]
+        discoveredServices = form.get("discovered_services")
+
+        try:
+            serviceName = deleteService(selected["host"], serviceKey)
+            result = {
+                "returncode": 0,
+                "stdout": f"Service removed: {serviceName}",
+                "stderr": "",
+            }
+        except ValueError as error:
+            result = {
+                "returncode": 1,
+                "stdout": "",
+                "stderr": str(error),
+            }
+
+        self.sendHtml(
+            renderIndex(
+                selected,
+                result,
+                discoveredServices=discoveredServices,
+                statuses=getSafeServiceStatuses(selected["host"]),
+            )
+        )
 
     def readForm(self):
         contentLength = int(self.headers.get("Content-Length", "0"))

@@ -1,4 +1,4 @@
-from app.storage import addHostServices, loadData, makeServiceKey
+from app.storage import addHostServices, deleteHostService, loadData, makeServiceKey
 
 ALLOWED_ACTIONS = [
     "status",
@@ -54,6 +54,10 @@ def getHostServices(hostName):
 
 def addServices(hostName, serviceNames):
     return addHostServices(hostName, serviceNames)
+
+
+def deleteService(hostName, serviceKey):
+    return deleteHostService(hostName, serviceKey)
 
 
 def getActions():

@@ -4,12 +4,12 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from app.hosts import parseHostInput
-from app.storage import addHost, addHostServices, loadData, makeServiceKey
+from app.storage import addHost, addHostServices, deleteHost, deleteHostService, loadData, makeServiceKey
 from app.discovery import parseServiceUnits
 from app.remote import buildSshCommand, makeCommandResult, validateRemoteCommand
 from app.services import getServiceUnit, validateAction, validateService
 from app.status import parseServiceState
-from app.views import renderServiceList
+from app.views import renderServiceList, renderServiceManagementDialog
 
 
 class ServiceTests(unittest.TestCase):
@@ -59,6 +59,20 @@ class ServiceTests(unittest.TestCase):
             self.assertEqual("ssh.service", services["ssh"])
             self.assertEqual("nginx.service", services["nginx"])
             self.assertNotIn("not-valid", services)
+
+    def test_hosts_and_services_can_be_deleted(self):
+        with TemporaryDirectory() as directory:
+            dataPath = Path(directory) / "service_manager.json"
+            hostName = addHost(parseHostInput("pablo@192.168.1.50"), dataPath)
+            addHostServices(hostName, ["ssh.service"], dataPath)
+
+            deletedService = deleteHostService(hostName, "ssh", dataPath)
+            self.assertEqual("ssh.service", deletedService)
+            self.assertEqual({}, loadData(dataPath)["hosts"][hostName]["services"])
+
+            deletedHost = deleteHost(hostName, dataPath)
+            self.assertEqual(hostName, deletedHost)
+            self.assertEqual({}, loadData(dataPath)["hosts"])
 
     def test_service_key_is_created_from_unit_name(self):
         self.assertEqual("ssh", makeServiceKey("ssh.service"))
@@ -171,6 +185,43 @@ ssh.service loaded active running OpenBSD Secure Shell server
         self.assertIn("service-status-dot-active", html)
         self.assertIn("service-status-dot-inactive", html)
         self.assertEqual(len(services) * 4, html.count('name="action"'))
+
+    def test_status_action_result_is_rendered_inside_selected_service(self):
+        services = {"ssh": "ssh.service", "nginx": "nginx.service"}
+        actions = ["status", "start", "stop", "restart"]
+        selected = {"host": "raspberry", "service": "ssh", "action": "status"}
+        result = {
+            "returncode": 0,
+            "stdout": "ssh.service is active",
+            "stderr": "",
+        }
+
+        with patch("app.views.getAllowedServices", return_value=services):
+            with patch("app.views.getAllowedActions", return_value=actions):
+                html = renderServiceList("raspberry", selected=selected, result=result)
+
+        self.assertIn("status-action-result", html)
+        self.assertIn("Status result", html)
+        self.assertIn("ssh.service is active", html)
+        self.assertEqual(1, html.count("status-action-result"))
+
+    def test_service_management_dialog_separates_included_and_available_services(self):
+        services = {"ssh": "ssh.service"}
+        discoveredServices = ["ssh.service", "nginx.service"]
+
+        with patch("app.views.getAllowedServices", return_value=services):
+            html = renderServiceManagementDialog("raspberry", discoveredServices)
+
+        self.assertIn("Manage services", html)
+        self.assertIn("Included", html)
+        self.assertIn("Available to add", html)
+        self.assertIn("Services found on raspberry.", html)
+        self.assertIn("Add service nginx.service", html)
+        self.assertIn("Remove service ssh", html)
+        self.assertIn('action="/delete-service"', html)
+        self.assertIn('action="/register-services"', html)
+        self.assertIn("ssh.service", html)
+        self.assertIn("nginx.service", html)
 
 
 if __name__ == "__main__":

@@ -59,6 +59,23 @@
    - The layout was redesigned as a compact local app shell that can later fit a desktop wrapper.
    - Service cards use theme-aware SVG icons for start, stop, and restart, and a red/green status dot instead of an `is-active` action button.
 
+9. Improve service status feedback
+   - The initial page load now checks the selected or first available host and updates service LEDs.
+   - Service LEDs are refreshed after `start`, `stop`, `restart`, and `status` actions.
+   - The per-service `status` action now shows its output inside the same service card instead of the global result panel.
+   - The inline status result opens with a small animation and respects reduced-motion preferences.
+   - Tests cover the inline status result rendering.
+
+10. Improve service and host management usability
+   - The inline `status` result now opens below the service row without shifting the action buttons out of place.
+   - Saved hosts can be deleted from the host list with a trash icon button.
+   - Service discovery now opens a management dialog instead of rendering a separate page section.
+   - The dialog separates included services from available services.
+   - Available services can be added one at a time with a plus icon button.
+   - Included services can be removed with a trash icon button.
+   - Tests cover host deletion, service deletion, and the new service-management dialog rendering.
+   - The service-management dialog now uses English labels and matching row layouts for included and available services.
+
 ## Next Point: Add Logs and Action History
 
 Goal: record service actions so the user can review recent activity.

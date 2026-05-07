@@ -44,6 +44,18 @@ def addHost(hostData, path=DATA_PATH):
     return hostName
 
 
+def deleteHost(hostName, path=DATA_PATH):
+    data = loadData(path)
+    hosts = data.setdefault("hosts", {})
+
+    if hostName not in hosts:
+        raise ValueError("Host no permitido")
+
+    del hosts[hostName]
+    saveData(data, path)
+    return hostName
+
+
 def addHostServices(hostName, serviceNames, path=DATA_PATH):
     data = loadData(path)
     hosts = data.setdefault("hosts", {})
@@ -65,6 +77,22 @@ def addHostServices(hostName, serviceNames, path=DATA_PATH):
 
     saveData(data, path)
     return added
+
+
+def deleteHostService(hostName, serviceKey, path=DATA_PATH):
+    data = loadData(path)
+    hosts = data.setdefault("hosts", {})
+
+    if hostName not in hosts:
+        raise ValueError("Host no permitido")
+
+    services = hosts[hostName].setdefault("services", {})
+    if serviceKey not in services:
+        raise ValueError("Servicio no permitido")
+
+    serviceName = services.pop(serviceKey)
+    saveData(data, path)
+    return serviceName
 
 
 def makeServiceKey(serviceName):

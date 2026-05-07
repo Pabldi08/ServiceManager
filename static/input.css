@@ -61,6 +61,14 @@
     @apply inline-flex size-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--primary)] transition hover:bg-[var(--surface-soft)] hover:shadow-sm;
   }
 
+  .icon-danger-button {
+    @apply inline-flex size-9 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-red-700 transition hover:bg-red-500/20;
+  }
+
+  .icon-add-button {
+    @apply inline-flex size-9 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 transition hover:bg-emerald-500/20;
+  }
+
   .action-icon {
     @apply size-5;
     fill: none;
@@ -80,6 +88,32 @@
 
   .service-status-dot-inactive {
     @apply bg-red-500 shadow-[0_0_0.9rem_rgba(239,68,68,0.45)];
+  }
+
+  .service-status-dot-pending {
+    @apply bg-amber-400 shadow-[0_0_0.9rem_rgba(251,191,36,0.45)];
+  }
+
+  .service-status-dot-unknown {
+    @apply bg-slate-400 shadow-[0_0_0.9rem_rgba(148,163,184,0.35)];
+  }
+
+  .status-action-result {
+    @apply mt-3 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 text-left shadow-sm;
+    animation: status-result-open 180ms ease-out both;
+    transform-origin: top center;
+  }
+
+  .dialog-panel {
+    @apply rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-0 text-[var(--text)] shadow-app backdrop:bg-slate-950/50;
+  }
+
+  .service-dialog-section {
+    @apply min-h-0 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3;
+  }
+
+  .service-dialog-row {
+    @apply flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3;
   }
 
   .field-control {
@@ -144,6 +178,26 @@
 
   :root[data-theme="dark"] .state-activating {
     @apply text-amber-200;
+  }
+
+  :root[data-theme="dark"] .icon-danger-button {
+    @apply text-red-200;
+  }
+
+  :root[data-theme="dark"] .icon-add-button {
+    @apply text-emerald-200;
+  }
+}
+
+@keyframes status-result-open {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem) scaleY(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
   }
 }
 
